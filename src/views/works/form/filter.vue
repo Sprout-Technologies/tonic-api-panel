@@ -136,116 +136,214 @@
       </el-form-item>
 
 
-<!--      <el-main>-->
+      <el-main>
 
-<!--        <el-button type="primary" @click="newLayer">新增区间(没做完,以下忽略)</el-button>-->
+        <el-button type="primary" @click="newLayer">新增区间</el-button>
 
-<!--        <el-table-->
-<!--          stripe-->
-<!--          ref="dragTable"-->
-<!--          :data="form.paramsObj['durations']"-->
-<!--          row-key="z"-->
-<!--          v-loading.body="listLoading"-->
-<!--          element-loading-text="Loading"-->
-<!--          @row-click="clickRow"-->
+        <el-table
+          stripe
+          ref="dragTable"
+          v-if="form.paramsObj && form.paramsObj['durations']"
+          :data="form.paramsObj['durations']"
+          row-key="z"
+          v-loading.body="listLoading"
+          element-loading-text="Loading"
+          @row-click="clickRow"
 
-<!--          border fit highlight-current-row>-->
-<!--          <el-table-column-->
-<!--            prop="name"-->
-<!--            width="120"-->
+          border fit highlight-current-row>
+          <el-table-column
+            prop="image"
+            label="图像">
+            <template v-slot:default="scope">
 
-<!--            label="名称">-->
-<!--            <template v-slot:default="scope">-->
-<!--              <el-input v-model="scope.row.name" @change="handleLayerNameChange(scope.row)"></el-input>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
-<!--          <el-table-column-->
-<!--            prop="name"-->
-<!--            label="图像">-->
-<!--            <template v-slot:default="scope">-->
+                <el-upload
+                  class="avatar-uploader"
+                  :show-file-list="false"
+                  :ref="scope.row.z"
+                  :on-success="(a,b)=> handleRowSuccess(scope.$index, a,b)"
+                  :before-upload="beforeAvatarUpload"
+                  :action="uploadAction"
+                  :data="{'path':'layers'}"
+                  :headers="uploadToken"
+                  :on-change="(a,b)=>handleFileChange(a,b,'layer_'+scope.row.name)"
+                  :file-list="File['layer_'+scope.row.name]"
+                >
+                  <div style="background-color: black" v-if="scope.row.image">
+                  <img :src="scope.row.image" class="thumb">
+                  </div>
 
-<!--                <el-upload-->
-<!--                  class="avatar-uploader"-->
-<!--                  :show-file-list="false"-->
-<!--                  :ref="scope.row.z"-->
-<!--                  :on-success="(a,b)=> handleRowSuccess(scope.$index, a,b)"-->
-<!--                  :before-upload="beforeAvatarUpload"-->
-<!--                  :action="uploadAction"-->
-<!--                  :data="{'path':'layers'}"-->
-<!--                  :headers="uploadToken"-->
-<!--                  :on-change="(a,b)=>handleFileChange(a,b,'layer_'+scope.row.name)"-->
-<!--                  :file-list="File['layer_'+scope.row.name]"-->
-<!--                >-->
-<!--                  <div style="background-color: black" v-if="scope.row.image">-->
-<!--                  <img :src="scope.row.image" class="thumb">-->
-<!--                  </div>-->
+                  <i v-else class="el-icon-plus thumb-uploader-icon"></i>
+                </el-upload>
+                <!--        <el-col :span="12">-->
+                <!--          <el-input v-model="form.icon"></el-input>-->
+                <!--        </el-col>-->
 
-<!--                  <i v-else class="el-icon-plus thumb-uploader-icon"></i>-->
-<!--                </el-upload>-->
-<!--                &lt;!&ndash;        <el-col :span="12">&ndash;&gt;-->
-<!--                &lt;!&ndash;          <el-input v-model="form.icon"></el-input>&ndash;&gt;-->
-<!--                &lt;!&ndash;        </el-col>&ndash;&gt;-->
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="start"
+            label="开始时间">
+            <template v-slot:default="scope">
+              <el-input-number :precision="2" size="mini" controls-position="right" :step="5" @change="handleChangeT(scope.row)" v-model="realX[scope.row.name]"></el-input-number>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="end"
+            label="结束时间">
+            <template v-slot:default="scope">
+              <el-input-number :precision="2" size="mini" controls-position="right" :step="5" @change="handleChangeT(scope.row)" v-model="realY[scope.row.name]"></el-input-number>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="frame_per_style"
+            label="几帧一渲">
+            <template v-slot:default="scope">
+              <el-input-number size="mini" controls-position="right" :step="1" @change="handleChangeT(scope.row)" v-model="realY[scope.row.name]"></el-input-number>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="end"
+            label="细节修正(-2到2)">
+            <template v-slot:default="scope">
+              <el-input-number size="mini" controls-position="right" :step="0.05" @change="handleChangeT(scope.row)" v-model="realY[scope.row.name]"></el-input-number>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="cfg"
+            label="cfg">
+            <template v-slot:default="scope">
+              <el-input-number size="mini" controls-position="right" :step="1" @change="handleChangeT(scope.row)" v-model="realY[scope.row.name]"></el-input-number>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="control_style"
+            width="90"
+            label="控制样式">
+            <template v-slot:default="scope">
+                <el-checkbox v-model="form.hidden"></el-checkbox>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="control_color"
+            width="90"
+            label="控制颜色">
+            <template v-slot:default="scope">
+                <el-checkbox v-model="form.hidden"></el-checkbox>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="tag_prompt"
+            width="90"
+            label="使用tagger">
+            <template v-slot:default="scope">
+              <el-checkbox v-model="form.hidden"></el-checkbox>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="interpolation"
+            width="90"
+            label="补帧">
+            <template v-slot:default="scope">
+              <el-checkbox v-model="form.hidden"></el-checkbox>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="adetailer"
+            width="90"
+            label="开启adetailer">
+            <template v-slot:default="scope">
+              <el-checkbox v-model="form.hidden"></el-checkbox>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="renderer"
+            width="90"
 
-<!--            </template>-->
-<!--          </el-table-column>-->
-<!--          <el-table-column-->
-<!--            prop="start"-->
-<!--            label="start">-->
-<!--            <template v-slot:default="scope">-->
-<!--              <el-input-number :precision="2" size="mini" controls-position="right" :step="5" @change="handleChangeT(scope.row)" v-model="realX[scope.row.name]"></el-input-number>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
-<!--          <el-table-column-->
-<!--            prop="end"-->
-<!--            label="end">-->
-<!--            <template v-slot:default="scope">-->
-<!--              <el-input-number :precision="2" size="mini" controls-position="right" :step="5" @change="handleChangeT(scope.row)" v-model="realY[scope.row.name]"></el-input-number>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
+            label="渲染方式">
+            <template v-slot:default="scope">
+              <el-select style="width: 100%" class="filter-item" v-model="scope.row.facialPart" filterable placeholder="选择类别" @change="handleFacialPartChange(scope.row)">
+                <el-option v-for="t in facialPartValues" :key="t" :label="t" :value="t">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
 
-<!--     -->
-<!--          <el-table-column-->
-<!--            prop="offsetX"-->
-<!--            width="90"-->
-<!--            label="offsetX">-->
-<!--            <template v-slot:default="scope">-->
-<!--              <el-input-number :precision="2" size="mini" controls-position="right" @change="handleChangeOffset(scope.row)" v-model="scope.row.offsetX"></el-input-number>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
-<!--          <el-table-column-->
-<!--            prop="offsetY"-->
-<!--            width="90"-->
+          <el-table-column
+            prop="extractor"
+            width="90"
 
-<!--            label="offsetY">-->
-<!--            <template v-slot:default="scope">-->
-<!--              <el-input-number :precision="2"  size="mini" controls-position="right" @change="handleChangeOffset(scope.row)" v-model="scope.row.offsetY"></el-input-number>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
+            label="勾线方式">
+            <template v-slot:default="scope">
+              <el-select style="width: 100%" class="filter-item" v-model="scope.row.facialPart" filterable placeholder="选择类别" @change="handleFacialPartChange(scope.row)">
+                <el-option v-for="t in facialPartValues" :key="t" :label="t" :value="t">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="styler"
+            width="90"
 
-<!--          <el-table-column-->
-<!--            prop="facialPart"-->
-<!--            label="部位">-->
-<!--            <template v-slot:default="scope">-->
-<!--                <el-select style="width: 100%" class="filter-item" v-model="scope.row.facialPart" filterable placeholder="选择类别" @change="handleFacialPartChange(scope.row)">-->
-<!--                  <el-option v-for="t in facialPartValues" :key="t" :label="t" :value="t">-->
-<!--                  </el-option>-->
-<!--                </el-select>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
-<!--          <el-table-column-->
-<!--            fixed="right"-->
-<!--            label="操作"-->
-<!--            width="100">-->
-<!--            <template v-slot:default="scope">-->
-<!--              <el-button  type="text" size="mini" @click="delRow(scope.$index, scope.row)" icon="el-icon-delete"></el-button>-->
+            label="样式学习方式">
+            <template v-slot:default="scope">
+              <el-select style="width: 100%" class="filter-item" v-model="scope.row.facialPart" filterable placeholder="选择类别" @change="handleFacialPartChange(scope.row)">
+                <el-option v-for="t in facialPartValues" :key="t" :label="t" :value="t">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="type"
+            width="90"
 
-<!--              <el-button  type="text" v-if="scope.$index>0" size="mini" @click="moveUp(scope.$index, scope.row)" icon="el-icon-top"></el-button>-->
+            label="轮播方式">
+            <template v-slot:default="scope">
+              <el-select style="width: 100%" class="filter-item" v-model="scope.row.facialPart" filterable placeholder="选择类别" @change="handleFacialPartChange(scope.row)">
+                <el-option v-for="t in facialPartValues" :key="t" :label="t" :value="t">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="model"
+            width="90"
 
-<!--              <el-button  type="text" v-if="scope.$index<form.layers.length-1" size="mini" @click="moveDown(scope.$index, scope.row)" icon="el-icon-bottom"></el-button>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
-<!--        </el-table>-->
-<!--      </el-main>-->
+            label="底模">
+            <template v-slot:default="scope">
+              <el-select style="width: 100%" class="filter-item" v-model="scope.row.facialPart" filterable placeholder="选择类别" @change="handleFacialPartChange(scope.row)">
+                <el-option v-for="t in facialPartValues" :key="t" :label="t" :value="t">
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="trigger_prompt"
+            label="触发词">
+            <template v-slot:default="scope">
+                <el-input v-model="form.title"></el-input>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="gender_prompt"
+            label="性别触发词">
+            <template v-slot:default="scope">
+              <el-input v-model="form.title"></el-input>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="100">
+            <template v-slot:default="scope">
+              <el-button  type="text" size="mini" @click="delRow(scope.$index, scope.row)" icon="el-icon-delete"></el-button>
+
+              <el-button  type="text" v-if="scope.$index>0" size="mini" @click="moveUp(scope.$index, scope.row)" icon="el-icon-top"></el-button>
+
+              <el-button  type="text" v-if="scope.$index<form.layers.length-1" size="mini" @click="moveDown(scope.$index, scope.row)" icon="el-icon-bottom"></el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-main>
 
       <el-form-item>
         <el-button type="primary" @click="onSubmit">{{this.id ? '修改':'创建'}}</el-button>
@@ -817,6 +915,7 @@ export default {
           // this.filterTagsView = res.filterTags.map(i => {
           //   return i.tag
           // })
+          if(!res['params']) res['params']=""
           try {
             res.paramsObj = JSON.parse(res['params'])
           }catch (e){
