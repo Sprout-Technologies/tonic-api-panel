@@ -3,24 +3,23 @@ import request from '@/utils/request'
 export function getList() {
   return request({
     url: '/event/',
-    method: 'get',
+    method: 'get'
   })
 }
 
 export function getById(id) {
   return request({
-    url: '/event/'+id,
-    method: 'get',
+    url: '/event/' + id,
+    method: 'get'
   })
 }
 
-export function approve(id,reject) {
+export function approve(id, reject) {
   return request({
-    url: '/event/'+id+'/passed/'+reject,
-    method: 'get',
+    url: '/event/' + id + '/passed/' + reject,
+    method: 'get'
   })
 }
-
 
 export function updateOne(data) {
   return request({
@@ -32,8 +31,8 @@ export function updateOne(data) {
 
 export function deleteById(id) {
   return request({
-    url: '/event/'+id,
-    method: 'delete',
+    url: '/event/' + id,
+    method: 'delete'
   })
 }
 

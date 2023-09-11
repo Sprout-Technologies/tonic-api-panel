@@ -3,14 +3,14 @@ import request from '@/utils/request'
 export function getList() {
   return request({
     url: '/config/',
-    method: 'get',
+    method: 'get'
   })
 }
 
 export function getById(id) {
   return request({
-    url: '/config/'+id,
-    method: 'get',
+    url: '/config/' + id,
+    method: 'get'
   })
 }
 
@@ -32,8 +32,8 @@ export function updateBatch(data) {
 
 export function deleteById(id) {
   return request({
-    url: '/config/'+id,
-    method: 'delete',
+    url: '/config/' + id,
+    method: 'delete'
   })
 }
 
