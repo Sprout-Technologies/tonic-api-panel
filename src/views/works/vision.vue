@@ -95,27 +95,27 @@
 </template>
 
 <script>
-import {queryList, deleteById, updateBatch} from "@/api/vision"
-import {queryList as queryAristsList} from "@/api/artist"
+import { queryList, deleteById, updateBatch } from '@/api/vision'
+import { queryList as queryAristsList } from '@/api/artist'
 import Sortable from 'sortablejs'
 
 const moment = require('moment')
 export default {
   data() {
     return {
-        newList:[],
+      newList: [],
       list: null,
       listLoading: true,
       listQuery: {
-          size: 99999,
-          page: 0,
-          sort:['weight,asc','hidden,asc'],
+        size: 99999,
+        page: 0,
+        sort: ['weight,asc', 'hidden,asc'],
         artists: []
       },
-      total:0,
-      currPage:1,
-      maxPage:0,
-        artists: []
+      total: 0,
+      currPage: 1,
+      maxPage: 0,
+      artists: []
 
     }
   },
@@ -131,10 +131,9 @@ export default {
   },
   created() {
     this.fetchData()
-
   },
   methods: {
-    getList(){
+    getList() {
       this.listLoading = true
       return queryList(this.listQuery).then(response => {
         this.list = response.content
@@ -142,95 +141,92 @@ export default {
         this.currPage = this.listQuery.page + 1
         this.maxPage = response.totalPages
         this.listLoading = false
-          this.newList = this.list.map((v,idx) => idx)
+        this.newList = this.list.map((v, idx) => idx)
 
-          this.$nextTick(() => {
-              this.setSort()
-          })
+        this.$nextTick(() => {
+          this.setSort()
+        })
       })
     },
-      updateList(){
-          this.listLoading = true
-          return updateBatch(this.list).then(response => {
-              this.listLoading = false
-          })
-      },
-      setSort() {
-          const el = this.$refs.dragTable.$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0]
-          this.sortable = Sortable.create(el, {
-              ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
-              setData: function(dataTransfer) {
-                  // to avoid Firefox bug
-                  // Detail see : https://github.com/RubaXa/Sortable/issues/1012
-                  dataTransfer.setData('Text', '')
-              },
-              onEnd: evt => {
-                  console.log(this.move(this.list,evt.oldIndex,evt.newIndex))
-                  // const targetRow = this.list.splice(evt.oldIndex, 1)[0]
-                  console.log(evt.oldIndex)
-                  console.log(evt)
+    updateList() {
+      this.listLoading = true
+      return updateBatch(this.list).then(response => {
+        this.listLoading = false
+      })
+    },
+    setSort() {
+      const el = this.$refs.dragTable.$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0]
+      this.sortable = Sortable.create(el, {
+        ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
+        setData: function(dataTransfer) {
+          // to avoid Firefox bug
+          // Detail see : https://github.com/RubaXa/Sortable/issues/1012
+          dataTransfer.setData('Text', '')
+        },
+        onEnd: evt => {
+          console.log(this.move(this.list, evt.oldIndex, evt.newIndex))
+          // const targetRow = this.list.splice(evt.oldIndex, 1)[0]
+          console.log(evt.oldIndex)
+          console.log(evt)
 
-                  // this.list.splice(evt.newIndex, 0, targetRow)
-                  // for show the changes, you can delete in you code
-                  const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-                  this.newList.splice(evt.newIndex, 0, tempIndex)
-                  this.newList.map((val,idx)=>this.list[val].weight=idx)
-                  this.updateList()
-              }
-          })
-      },
+          // this.list.splice(evt.newIndex, 0, targetRow)
+          // for show the changes, you can delete in you code
+          const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
+          this.newList.splice(evt.newIndex, 0, tempIndex)
+          this.newList.map((val, idx) => this.list[val].weight = idx)
+          this.updateList()
+        }
+      })
+    },
 
-
-      move(arr,index,tindex){
-          //如果当前元素在拖动目标位置的下方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置的地方新增一个和当前元素值一样的元素，
-          //我们再把数组之前的那个拖动的元素删除掉，所以要len+1
-          var arr = JSON.parse(JSON.stringify(arr))
-          if(index>tindex){
-              arr.splice(tindex,0,arr[index]);
-              arr.splice(index+1,1)
-          }
-          else{
-              //如果当前元素在拖动目标位置的上方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置+1的地方新增一个和当前元素值一样的元素，
-              //这时，数组len不变，我们再把数组之前的那个拖动的元素删除掉，下标还是index
-              arr.splice(tindex+1,0,arr[index]);
-              arr.splice(index,1)
-          }
-          for(let i = 0 ; i < arr.length; i++){
-              arr[i].weight = i
-          }
-          return arr
-      },
+    move(arr, index, tindex) {
+      // 如果当前元素在拖动目标位置的下方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置的地方新增一个和当前元素值一样的元素，
+      // 我们再把数组之前的那个拖动的元素删除掉，所以要len+1
+      var arr = JSON.parse(JSON.stringify(arr))
+      if (index > tindex) {
+        arr.splice(tindex, 0, arr[index])
+        arr.splice(index + 1, 1)
+      } else {
+        // 如果当前元素在拖动目标位置的上方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置+1的地方新增一个和当前元素值一样的元素，
+        // 这时，数组len不变，我们再把数组之前的那个拖动的元素删除掉，下标还是index
+        arr.splice(tindex + 1, 0, arr[index])
+        arr.splice(index, 1)
+      }
+      for (let i = 0; i < arr.length; i++) {
+        arr[i].weight = i
+      }
+      return arr
+    },
     fetchData() {
-                          queryAristsList({size:99999}).then(res=>this.artists = res)
+      queryAristsList({ size: 99999 }).then(res => this.artists = res)
       this.getList()
     },
-    handleEdit(idx,r){
-      let pushDest = r ? { name: '视觉表单', params: { id: r.id }} : { name: '视觉表单' , params: { id: 'create'}}
+    handleEdit(idx, r) {
+      const pushDest = r ? { name: '视觉表单', params: { id: r.id }} : { name: '视觉表单', params: { id: 'create' }}
       this.$router.push(pushDest)
     },
-    handleDelete(idx,r){
+    handleDelete(idx, r) {
       this.$confirm('删除不可逆，如有关联数据，删除将失败。', '提示', {
-          confirmButtonText: '我确定要删除',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          deleteById(r.id).then(res=>{
-              this.$message({
-                type: 'success',
-                message: '删除成功!'
-              });
-            this.fetchData()
-          })
-
-        }).catch((r) => {
+        confirmButtonText: '我确定要删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteById(r.id).then(res => {
           this.$message({
-            type: r ? 'error' : 'info',
-            message: '删除失败'
-          });
-        });
+            type: 'success',
+            message: '删除成功!'
+          })
+          this.fetchData()
+        })
+      }).catch((r) => {
+        this.$message({
+          type: r ? 'error' : 'info',
+          message: '删除失败'
+        })
+      })
     },
-    handleFilter(){
-      if(!this.listQuery.name){delete this.listQuery.name}
+    handleFilter() {
+      if (!this.listQuery.name) { delete this.listQuery.name }
       this.listQuery.page = 0
       this.getList()
     },
@@ -243,7 +239,7 @@ export default {
       // this.listQuery.page = val
       this.listQuery.page = val - 1
       this.getList()
-    },
+    }
   }
 }
 </script>

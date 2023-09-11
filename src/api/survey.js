@@ -1,29 +1,29 @@
 import request from '@/utils/request'
-import axios from "axios";
+import axios from 'axios'
 
 export function getList() {
   return request({
     url: '/survey/',
-    method: 'get',
+    method: 'get'
   })
 }
 export function getAnswers() {
   return request({
     url: '/survey/answers/',
-    method: 'get',
+    method: 'get'
   })
 }
 
 export function getAnswer(id) {
   return request({
-    url: '/survey/answer/'+id,
-    method: 'get',
+    url: '/survey/answer/' + id,
+    method: 'get'
   })
 }
 export function getById(id) {
   return request({
-    url: '/survey/'+id,
-    method: 'get',
+    url: '/survey/' + id,
+    method: 'get'
   })
 }
 
@@ -36,15 +36,15 @@ export function updateOne(data) {
 }
 export function deleteById(id) {
   return request({
-    url: '/survey/'+id,
-    method: 'delete',
+    url: '/survey/' + id,
+    method: 'delete'
   })
 }
 
 export function publishBatch() {
   return request({
     url: '/survey/publish/',
-    method: 'post',
+    method: 'post'
   })
 }
 
@@ -64,10 +64,9 @@ export function updateBatch(data) {
   })
 }
 
-
 export function publishById(data) {
   return request({
-    url: '/survey/publish/'+data,
+    url: '/survey/publish/' + data,
     method: 'get'
   })
 }

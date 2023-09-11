@@ -1,17 +1,17 @@
 import request from '@/utils/request'
-import axios from "axios";
+import axios from 'axios'
 
 export function getList() {
   return request({
     url: '/filter/',
-    method: 'get',
+    method: 'get'
   })
 }
 
 export function getById(id) {
   return request({
-    url: '/filter/'+id,
-    method: 'get',
+    url: '/filter/' + id,
+    method: 'get'
   })
 }
 
@@ -24,21 +24,21 @@ export function updateOne(data) {
 }
 export function deleteById(id) {
   return request({
-    url: '/filter/'+id,
-    method: 'delete',
+    url: '/filter/' + id,
+    method: 'delete'
   })
 }
 
 export function publishById(id) {
   return request({
-    url: '/filter/publish/'+id,
-    method: 'post',
+    url: '/filter/publish/' + id,
+    method: 'post'
   })
 }
 export function publishBatch() {
   return request({
     url: '/filter/publish/',
-    method: 'post',
+    method: 'post'
   })
 }
 
@@ -53,14 +53,14 @@ export function queryList(p) {
 export function inform() {
   return request({
     url: '/filter/publish/inform',
-    method: 'get',
+    method: 'get'
   })
 }
 
 export function getAvailableTags() {
   return request({
     url: '/filter/tags',
-    method: 'get',
+    method: 'get'
   })
 }
 
@@ -73,9 +73,8 @@ export function updateBatch(data) {
 }
 
 export function exportData(data) {
-  window.open(request.baseURL+'filter/export/'+data.id)
+  window.open(request.baseURL + 'filter/export/' + data.id)
 }
-
 
 export function updateOrder(data) {
   return request({
@@ -85,9 +84,8 @@ export function updateOrder(data) {
   })
 }
 
-
 export async function getBuffer(url) {
-  const response = await axios.get(url, {responseType: 'arraybuffer'})
-  const buffer = Buffer.from(response.data, "utf-8")
+  const response = await axios.get(url, { responseType: 'arraybuffer' })
+  const buffer = Buffer.from(response.data, 'utf-8')
   return buffer
 }
