@@ -127,27 +127,27 @@
 </template>
 
 <script>
-import {queryList, deleteById, publishById, inform, publishBatch, updateOrder, getAvailableTags} from "@/api/filter"
+import { queryList, deleteById, publishById, inform, publishBatch, updateOrder, getAvailableTags } from '@/api/filter'
 import Sortable from 'sortablejs'
-import {getImportFileURL, getUploadToken} from '@/api/upload'
+import { getImportFileURL, getUploadToken } from '@/api/upload'
 
 const moment = require('moment')
 export default {
   data() {
     return {
-      newList:[],
+      newList: [],
       list: null,
       listLoading: true,
       listQuery: {
         size: 99999,
         page: 0,
-        sort:['weight,asc','updatedAt,desc'],
+        sort: ['weight,asc', 'updatedAt,desc']
       },
-      total:0,
-      currPage:1,
-      maxPage:0,
+      total: 0,
+      currPage: 1,
+      maxPage: 0,
       uploadAction: getImportFileURL(),
-      uploadToken:getUploadToken()
+      uploadToken: getUploadToken()
     }
   },
   filter: {
@@ -162,10 +162,9 @@ export default {
   },
   created() {
     this.fetchData()
-
   },
   methods: {
-    getList(){
+    getList() {
       this.listLoading = true
       return queryList(this.listQuery).then(response => {
         this.list = response.content
@@ -173,7 +172,7 @@ export default {
         this.currPage = this.listQuery.page + 1
         this.maxPage = response.totalPages
         this.listLoading = false
-        this.newList = this.list.map((v,idx) => idx)
+        this.newList = this.list.map((v, idx) => idx)
 
         this.$nextTick(() => {
           this.setSort()
@@ -184,11 +183,11 @@ export default {
       this.getList()
     },
 
-    handleEdit(idx,r){
-      let pushDest = r ? { name: '滤镜表单', params: { id: r.id }} : { name: '滤镜表单' , params: { id: 'create'}}
+    handleEdit(idx, r) {
+      const pushDest = r ? { name: '滤镜表单', params: { id: r.id }} : { name: '滤镜表单', params: { id: 'create' }}
       this.$router.push(pushDest)
     },
-    orderList(payload){
+    orderList(payload) {
       this.listLoading = true
       return updateOrder(payload).then(response => {
         this.listLoading = false
@@ -204,7 +203,7 @@ export default {
           dataTransfer.setData('Text', '')
         },
         onEnd: evt => {
-          console.log(this.move(this.list,evt.oldIndex,evt.newIndex))
+          console.log(this.move(this.list, evt.oldIndex, evt.newIndex))
           // const targetRow = this.list.splice(evt.oldIndex, 1)[0]
           console.log(evt.oldIndex)
           console.log(evt)
@@ -214,128 +213,123 @@ export default {
           const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
           this.newList.splice(evt.newIndex, 0, tempIndex)
 
-          this.orderList(this.newList.map((val,idx)=>{return {
-            id:this.list[val].id,
-            weight: idx
-          }}))
+          this.orderList(this.newList.map((val, idx) => {
+            return {
+              id: this.list[val].id,
+              weight: idx
+            }
+          }))
         }
       })
     },
 
-
-    move(arr,index,tindex){
-      //如果当前元素在拖动目标位置的下方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置的地方新增一个和当前元素值一样的元素，
-      //我们再把数组之前的那个拖动的元素删除掉，所以要len+1
+    move(arr, index, tindex) {
+      // 如果当前元素在拖动目标位置的下方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置的地方新增一个和当前元素值一样的元素，
+      // 我们再把数组之前的那个拖动的元素删除掉，所以要len+1
       var arr = JSON.parse(JSON.stringify(arr))
-      if(index>tindex){
-        arr.splice(tindex,0,arr[index]);
-        arr.splice(index+1,1)
+      if (index > tindex) {
+        arr.splice(tindex, 0, arr[index])
+        arr.splice(index + 1, 1)
+      } else {
+        // 如果当前元素在拖动目标位置的上方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置+1的地方新增一个和当前元素值一样的元素，
+        // 这时，数组len不变，我们再把数组之前的那个拖动的元素删除掉，下标还是index
+        arr.splice(tindex + 1, 0, arr[index])
+        arr.splice(index, 1)
       }
-      else{
-        //如果当前元素在拖动目标位置的上方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置+1的地方新增一个和当前元素值一样的元素，
-        //这时，数组len不变，我们再把数组之前的那个拖动的元素删除掉，下标还是index
-        arr.splice(tindex+1,0,arr[index]);
-        arr.splice(index,1)
-      }
-      for(let i = 0 ; i < arr.length; i++){
+      for (let i = 0; i < arr.length; i++) {
         arr[i].weight = i
       }
       return arr
     },
 
-    handleDelete(idx,r){
+    handleDelete(idx, r) {
       this.$confirm('删除不可逆，如果要下架，请到表单页勾选下架选项！确定要删除吗？', '提示', {
         confirmButtonText: '我确定要删除',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteById(r.id).then(res=>{
+        deleteById(r.id).then(res => {
           this.$message({
             type: 'success',
             message: '删除成功!'
-          });
+          })
           this.fetchData()
         })
-
       }).catch((r) => {
         this.$message({
           type: r ? 'error' : 'info',
           message: '删除失败'
-        });
-      });
+        })
+      })
     },
 
-    handleBatchPublish(){
+    handleBatchPublish() {
       this.$confirm('发布不可逆，请确认。', '提示', {
         confirmButtonText: '我确定要发布',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        publishBatch().then(res=>{
+        publishBatch().then(res => {
           this.$message({
             type: 'success',
             message: '发布成功!'
-          });
+          })
           this.fetchData()
         })
-
       }).catch((r) => {
         console.logr(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
-        });
-      });
+        })
+      })
     },
 
-
-    informUsers(){
+    informUsers() {
       this.$confirm('请确认要通知用户。', '提示', {
         confirmButtonText: '我确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        inform().then(res=>{
+        inform().then(res => {
           this.$message({
             type: 'success',
             message: '通知成功!'
-          });
+          })
         })
-
       }).catch((r) => {
         console.logr(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '通知失败'
-        });
-      });
+        })
+      })
     },
 
-    handlePublish(idx,r){
+    handlePublish(idx, r) {
       this.$confirm('发布不可逆，请确认。', '提示', {
         confirmButtonText: '我确定要发布',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        publishById(r.id).then(res=>{
+        publishById(r.id).then(res => {
           this.$message({
             type: 'success',
             message: '发布成功!'
-          });
+          })
           this.fetchData()
         })
-
       }).catch((r) => {
         console.logr(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
-        });
-      });
+        })
+      })
     },
 
-    handleFilter(){
-      if(!this.listQuery.name){delete this.listQuery.name}
+    handleFilter() {
+      if (!this.listQuery.name) { delete this.listQuery.name }
       this.listQuery.page = 0
       this.getList()
     },
@@ -351,16 +345,16 @@ export default {
     },
 
     handleRemove(file, fileList) {
-      console.log(file, fileList);
+      console.log(file, fileList)
     },
     handlePreview(file) {
-      console.log(file);
+      console.log(file)
     },
     handleExceed(files, fileList) {
-      this.$message.warning(`当前限制选择 1 个文件`);
+      this.$message.warning(`当前限制选择 1 个文件`)
     },
     beforeRemove(file, fileList) {
-      return this.$confirm(`确定移除 ${ file.name }？`);
+      return this.$confirm(`确定移除 ${file.name}？`)
     },
     handleUploadSuccess(res, file) {
       this.$message({
@@ -368,7 +362,7 @@ export default {
         type: 'success'
       })
       this.fetchData()
-    },
+    }
 
   }
 }
