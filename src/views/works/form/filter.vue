@@ -17,18 +17,10 @@
         <el-checkbox v-model="form.adetailer"></el-checkbox>
       </el-form-item>
       <el-form-item label="勾线方法">
-        <el-select v-model="form.feature_extractor" placeholder="选择勾线方法">
-          <el-option v-for="(value, key) in feature_extractor" :key="key" :label="key" :value="value">
-            {{key}}
-          </el-option>
-        </el-select>
+        <my-select v-model="form.extractor" :options="feature_extractor" placeholder="选择勾线方法"></my-select>
       </el-form-item>
       <el-form-item label="样式提取方法">
-        <el-select v-model="form.styler" placeholder="选择样式提取方法">
-          <el-option v-for="(value, key) in stylers" :key="key" :label="key" :value="value">
-            {{key}}
-          </el-option>
-        </el-select>
+        <my-select v-model="form.styler" :options="stylers" placeholder="选择样式提取方法"></my-select>
       </el-form-item>
       <el-form-item label="轮播方式">
         <el-select v-model="form.type" placeholder="选择类别">
@@ -37,11 +29,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="底模">
-        <el-select v-model="form.base_model" placeholder="选择底模">
-          <el-option v-for="(value, key) in base_models" :key="key" :label="key" :value="value">
-            {{key}}
-          </el-option>
-        </el-select>
+        <my-select v-model="form.base_model" :options="base_models" placeholder="选择底模"></my-select>
       </el-form-item>
       <el-form-item label="触发词">
         <el-input v-model="form.trigger_prompt"></el-input>
@@ -50,16 +38,73 @@
         <el-input v-model="form.gender_prompt"></el-input>
       </el-form-item>
       <el-form-item label="TemporalNet">
-        <el-select v-model="form.temporalnet" placeholder="选择TemporalNet">
-          <el-option v-for="(value, key) in temporalnet" :key="key" :label="key" :value="value">
-            {{key}}
-          </el-option>
-          <el-option label="null" :value="null"></el-option>
-        </el-select>
+        <my-select v-model="form.temporalnet" :options="temporalnet" placeholder="选择TemporalNet"></my-select>
+      </el-form-item>
+      <el-form-item label="Durations">
+        <div v-for="(duration, index) in form.durations" :key="index">
+          <el-row gutter={20}>
+            <el-col :span="4" class="row-spacing">
+              <el-form-item label="Start">
+                <el-input-number v-model="duration.start"></el-input-number>
+              </el-form-item>
+            </el-col>
+            <el-col :span="4" class="row-spacing">
+              <el-form-item label="End">
+                <el-input-number v-model="duration.end"></el-input-number>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8" class="row-spacing">
+              <el-form-item label="Styles">
+                <el-select v-model="duration.style" multiple placeholder="Styles">
+                  <el-option label="ANIME" value="ANIME"></el-option>
+                  <el-option label="TENG" value="TENG"></el-option>
+                  <!-- 更多选项... -->
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="4" class="row-spacing">
+              <el-form-item label="Type">
+                <el-select v-model="duration.type" placeholder="Type">
+                  <el-option label="Random" value="random"></el-option>
+                  <el-option label="Single" value="single"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="4" class="row-spacing">
+              <el-form-item label="Interpolation">
+                <el-checkbox v-model="duration.interpolation"></el-checkbox>
+              </el-form-item>
+            </el-col>
+            <el-col :span="4" class="row-spacing">
+              <el-form-item label="Montage">
+                <el-checkbox v-model="duration.montage"></el-checkbox>
+              </el-form-item>
+            </el-col>
+            <el-col :span="4" class="row-spacing">
+              <el-form-item label="Frame per Style">
+                <el-input-number v-model="duration.frame_per_style"></el-input-number>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8" class="row-spacing">
+              <el-form-item label="Mask Vid">
+                <el-input v-model="duration.outpaint.mask_vid"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8" class="row-spacing">
+              <el-form-item label="Mask Sd">
+                <el-input v-model="duration.outpaint.mask_sd"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-button type="text" @click="removeDuration(index)">删除</el-button>
+            </el-col>
+          </el-row>
+        </div>
+        <el-button type="text" @click="addDuration">添加 Duration</el-button>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit">{{this.id ? '修改':'创建'}}</el-button>
-        <el-button @click="onCancel">返回</el-button>
+        <el-button type="primary">{{this.id ? '修改':'创建'}}</el-button>
+        <el-button>返回</el-button>
       </el-form-item>
       <el-form-item label="设置预览">
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
@@ -68,9 +113,14 @@
   </div>
 </template>
 
+
 <script>
 import { updateOne, getById, exportData } from '@/api/filter'
+import MySelect from './MySelect.vue'
 export default {
+  components: {
+    MySelect
+  },
   created() {
     this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
     this.fetchData(this.id)
@@ -79,9 +129,19 @@ export default {
     return {
       listLoading: false,
       form: {
-        paramsObj: {
-          'durations': []
-        }
+        name: '',
+        denoising_strength: null,
+        control_style: false,
+        control_color: false,
+        adetailer: false,
+        extractor: null,
+        styler: null,
+        type: null,
+        base_model: null,
+        trigger_prompt: '',
+        gender_prompt: '',
+        temporalnet: null,
+        durations: []
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -183,23 +243,49 @@ export default {
           'model': 'diff_control_sd15_temporalnet_fp16 [adc6bd97]',
           'weight': 0.7
         }
-      },
-      fetchData(id) {
-        if (id) {
-          this.listLoading = true
-          getById(id).then(res => {
-            this.listLoading = false
-            if (!res['params']) res['params'] = ''
-            try {
-              res.paramsObj = JSON.parse(res['params'])
-            } catch (e) {
-              alert(e)
-            }
-            this.form = res.paramsObj
-          })
+      }
+    }
+  },
+  methods: {
+    addDuration() {
+      this.form.durations.push({
+        start: 0,
+        end: 0,
+        style: [],
+        type: null,
+        interpolation: false,
+        montage: false,
+        frame_per_style: 0,
+        outpaint: {
+          mask_vid: '',
+          mask_sd: ''
         }
+      })
+    },
+    removeDuration(index) {
+      this.form.durations.splice(index, 1)
+    },
+    fetchData(id) {
+      if (id) {
+        this.listLoading = true
+        getById(id).then(res => {
+          this.listLoading = false
+          if (!res['params']) res['params'] = ''
+          try {
+            const paramsObj = JSON.parse(res['params'])
+            // 使用 Object.assign 方法将 paramsObj 中的属性合并到 this.form 中
+            this.form = Object.assign(this.form, paramsObj)
+          } catch (e) {
+            alert(e)
+          }
+        })
       }
     }
   }
 }
 </script>
+<style>
+.row-spacing {
+  margin-bottom: 20px;
+}
+</style>
