@@ -1,167 +1,70 @@
 <template>
   <div class="app-container">
-
     <el-form ref="form" :model="form" label-width="120px">
       <el-form-item label="滤镜名">
         <el-input v-model="form.name"></el-input>
       </el-form-item>
-      <el-form-item label="时长">
-        <el-input v-model="form.duration"></el-input>
+      <el-form-item label="去噪强度">
+        <el-input-number size="mini" controls-position="right" :step="1" v-model="form.denoising_strength"></el-input-number>
       </el-form-item>
-      <el-main>
-        基础设置
-        <el-table
-          stripe
-          ref="dragTable"
-          v-if="form.paramsObj && form.paramsObj['durations']"
-          :data="form.paramsObj['durations']"
-          row-key="z"
-          v-loading.body="listLoading"
-          element-loading-text="Loading"
-          border
-          fit
-          highlight-current-row
-        >
-          <el-table-column
-            prop="frame_per_style"
-            label="几帧一渲"
-          >
-            <template v-slot:default="scope">
-              <el-input-number size="mini" controls-position="right" :step="1" v-model="form.frame_per_style"></el-input-number>
-            </template>
-          </el-table-column>
-          <!-- Cfg Column -->
-          <el-table-column
-            prop="denoising_strength"
-            label="去噪强度"
-          >
-            <template v-slot:default="scope">
-              <el-input-number size="mini" controls-position="right" :step="1" v-model="form.denoising_strength"></el-input-number>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="control_style"
-            width="90"
-            label="控制样式">
-            <template v-slot:default="scope">
-                <el-checkbox v-model="form.control_style"></el-checkbox>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="control_color"
-            width="90"
-            label="控制颜色">
-            <template v-slot:default="scope">
-                <el-checkbox v-model="form.control_color"></el-checkbox>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="adetailer"
-            width="90"
-            label="开启adetailer">
-            <template v-slot:default="scope">
-              <el-checkbox v-model="form.adetailer"></el-checkbox>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="feature_extractor"
-            width="90"
-            label="勾线方法">
-            <template v-slot:default="scope">
-              <el-select style="width: 100%" class="filter-item" v-model="form.feature_extractor" filterable placeholder="选择勾线方法">
-                <el-option v-for="(value, key) in feature_extractor" :key="key" :label="key" :value="value">
-                  {{key}}
-                </el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="stylers"
-            width="90"
-            label="样式提取方法">
-            <template v-slot:default="scope">
-              <el-select style="width: 100%" class="filter-item" v-model="form.styler" filterable placeholder="选择样式提取方法">
-                <el-option v-for="(value, key) in stylers" :key="key" :label="key" :value="value">
-                  {{key}}
-                </el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="type"
-            width="90"
-
-            label="轮播方式">
-            <template v-slot:default="scope">
-              <el-select style="width: 100%" class="filter-item" v-model="form.type" filterable placeholder="选择类别">
-                <el-option value="single">
-                </el-option>
-                <el-option value="random">
-                </el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="base_model"
-            width="90"
-            label="底模">
-            <template v-slot:default="scope">
-              <el-select style="width: 100%" class="filter-item" v-model="form.base_model" filterable placeholder="选择底模">
-                <el-option v-for="(value, key) in base_models" :key="key" :label="key" :value="value">x
-                  {{key}}
-                </el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="trigger_prompt"
-            label="触发词">
-            <template v-slot:default="scope">
-                <el-input v-model="form.trigger_prompt"></el-input>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="gender_prompt"
-            label="性别触发词">
-            <template v-slot:default="scope">
-              <el-input v-model="form.gender_prompt"></el-input>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="temporalnet"
-            width="90"
-            label="TemporalNet">
-            <template v-slot:default="scope">
-              <el-select style="width: 100%" class="filter-item" v-model="scope.row.temporalnet" filterable placeholder="选择TemporalNet">
-                <el-option v-for="(value, key) in temporalnet" :key="key" :label="key" :value="value">
-                  {{key}}
-                </el-option>
-                <el-option label="null" :value="null"></el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-main>
-
-<!--      <el-form-item>
+      <el-form-item label="控制样式">
+        <el-checkbox v-model="form.control_style"></el-checkbox>
+      </el-form-item>
+      <el-form-item label="控制颜色">
+        <el-checkbox v-model="form.control_color"></el-checkbox>
+      </el-form-item>
+      <el-form-item label="开启adetailer">
+        <el-checkbox v-model="form.adetailer"></el-checkbox>
+      </el-form-item>
+      <el-form-item label="勾线方法">
+        <el-select v-model="form.feature_extractor" placeholder="选择勾线方法">
+          <el-option v-for="(value, key) in feature_extractor" :key="key" :label="key" :value="value">
+            {{key}}
+          </el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="样式提取方法">
+        <el-select v-model="form.styler" placeholder="选择样式提取方法">
+          <el-option v-for="(value, key) in stylers" :key="key" :label="key" :value="value">
+            {{key}}
+          </el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="轮播方式">
+        <el-select v-model="form.type" placeholder="选择类别">
+          <el-option value="single"></el-option>
+          <el-option value="random"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="底模">
+        <el-select v-model="form.base_model" placeholder="选择底模">
+          <el-option v-for="(value, key) in base_models" :key="key" :label="key" :value="value">
+            {{key}}
+          </el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="触发词">
+        <el-input v-model="form.trigger_prompt"></el-input>
+      </el-form-item>
+      <el-form-item label="性别触发词">
+        <el-input v-model="form.gender_prompt"></el-input>
+      </el-form-item>
+      <el-form-item label="TemporalNet">
+        <el-select v-model="form.temporalnet" placeholder="选择TemporalNet">
+          <el-option v-for="(value, key) in temporalnet" :key="key" :label="key" :value="value">
+            {{key}}
+          </el-option>
+          <el-option label="null" :value="null"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item>
         <el-button type="primary" @click="onSubmit">{{this.id ? '修改':'创建'}}</el-button>
         <el-button @click="onCancel">返回</el-button>
-&lt;!&ndash;        <el-button v-if="this.id" @click="onExport">导出</el-button>&ndash;&gt;
-      </el-form-item>-->
-      <el-form-item label="Dur">
-
       </el-form-item>
       <el-form-item label="设置预览">
-        <json-viewer
-          :value="form"
-          :expand-depth=5
-          copyable
-          boxed
-          sort></json-viewer>
+        <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
       </el-form-item>
-
     </el-form>
-
   </div>
 </template>
 
@@ -178,7 +81,7 @@ export default {
       form: {
         paramsObj: {
           'durations': []
-        },
+        }
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -290,13 +193,8 @@ export default {
             try {
               res.paramsObj = JSON.parse(res['params'])
             } catch (e) {
+              alert(e)
             }
-            if (res.paramsObj === null || res.paramsObj === '') {
-              res.paramsObj = {
-                'durations': []
-              }
-            }
-            console.log(res,'res')
             this.form = res.paramsObj
           })
         }
