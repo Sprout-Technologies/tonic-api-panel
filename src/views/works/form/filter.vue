@@ -103,7 +103,7 @@
         <el-button type="text" @click="addDuration">添加 Duration</el-button>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary">{{this.id ? '修改':'创建'}}</el-button>
+        <el-button type="primary" @click="saveData">{{this.id ? '修改':'创建'}}</el-button>
         <el-button>返回</el-button>
       </el-form-item>
       <el-form-item label="设置预览">
@@ -264,6 +264,20 @@ export default {
     },
     removeDuration(index) {
       this.form.durations.splice(index, 1)
+    },
+    saveData() {
+      updateOne(this.form).then(response => {
+        if (response.data.success) {
+          this.$message({
+            message: '保存成功',
+            type: 'success'
+          });
+        } else {
+          this.$message.error('保存失败');
+        }
+      }).catch(error => {
+        this.$message.error('保存失败: ' + error);
+      });
     },
     fetchData(id) {
       if (id) {
