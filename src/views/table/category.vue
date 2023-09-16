@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import {getList,deleteById} from "@/api/category"
+import { getList, deleteById } from '@/api/category'
 
 export default {
   data() {
@@ -79,31 +79,30 @@ export default {
         this.listLoading = false
       })
     },
-    handleEdit(idx,r){
-      let pushDest = r ? { name: '栏目表单', params: { id: r.id }} : { name: '栏目表单' , params: { id: 'create'}}
+    handleEdit(idx, r) {
+      const pushDest = r ? { name: '栏目表单', params: { id: r.id }} : { name: '栏目表单', params: { id: 'create' }}
       this.$router.push(pushDest)
     },
-    handleDelete(idx,r){
+    handleDelete(idx, r) {
       this.$confirm('删除不可逆，如有关联数据，删除将失败。', '提示', {
-          confirmButtonText: '我确定要删除',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          deleteById(r.id).then(res=>{
-              this.$message({
-                type: 'success',
-                message: '删除成功!'
-              });
-            this.fetchData()
-          })
-
-        }).catch((r) => {
+        confirmButtonText: '我确定要删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteById(r.id).then(res => {
           this.$message({
-            type: r ? 'error' : 'info',
-            message: '删除失败'
-          });
-        });
-    },
+            type: 'success',
+            message: '删除成功!'
+          })
+          this.fetchData()
+        })
+      }).catch((r) => {
+        this.$message({
+          type: r ? 'error' : 'info',
+          message: '删除失败'
+        })
+      })
+    }
   }
 }
 </script>
