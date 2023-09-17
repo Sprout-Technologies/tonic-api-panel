@@ -55,7 +55,6 @@
         </el-col>
         <el-col :span="6">
       <el-form-item label="封面图">
-
         <el-upload
           class="avatar-uploader"
           :show-file-list="false"
@@ -73,7 +72,6 @@
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
         </el-upload>
         <div v-if="form.previewCoverImage" >
-
           <el-button @click="handleRemove('previewCoverImage')">清除图片</el-button>
         </div>
 <!--        <el-col :span="12">-->
