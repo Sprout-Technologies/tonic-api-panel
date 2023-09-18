@@ -271,13 +271,13 @@ export default {
           this.$message({
             message: '保存成功',
             type: 'success'
-          });
+          })
         } else {
-          this.$message.error('保存失败');
+          this.$message.error('保存失败')
         }
       }).catch(error => {
-        this.$message.error('保存失败: ' + error);
-      });
+        this.$message.error('保存失败: ' + error)
+      })
     },
     fetchData(id) {
       if (id) {
@@ -286,6 +286,7 @@ export default {
           this.listLoading = false
           if (!res['params']) res['params'] = ''
           try {
+            console.log(res,'res')
             const paramsObj = JSON.parse(res['params'])
             // 使用 Object.assign 方法将 paramsObj 中的属性合并到 this.form 中
             this.form = Object.assign(this.form, paramsObj)
