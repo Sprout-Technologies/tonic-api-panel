@@ -58,7 +58,8 @@
                 <el-select v-model="duration.style" multiple placeholder="Styles">
                   <el-option label="ANIME" value="ANIME"></el-option>
                   <el-option label="TENG" value="TENG"></el-option>
-                  <!-- 更多选项... -->
+                  <el-option label="VALORANT" value="VALORANT"></el-option>
+                  <el-option label="NEON" value="NEON"></el-option>
                 </el-select>
               </el-form-item>
             </el-col>
@@ -107,6 +108,7 @@
         <el-button>返回</el-button>
       </el-form-item>
       <el-form-item label="设置预览">
+        {{form}}
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
       </el-form-item>
     </el-form>
@@ -115,8 +117,9 @@
 
 
 <script>
-import { updateOne, getById, exportData } from '@/api/filter'
+import { getById, updateOne } from '@/api/filter'
 import MySelect from './MySelect.vue'
+
 export default {
   components: {
     MySelect
@@ -266,6 +269,7 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
+      this.form.params = JSON.stringify(this.form)
       updateOne(this.form).then(response => {
         if (response.data.success) {
           this.$message({
@@ -286,10 +290,9 @@ export default {
           this.listLoading = false
           if (!res['params']) res['params'] = ''
           try {
-            console.log(res,'res')
             const paramsObj = JSON.parse(res['params'])
+            this.form = paramsObj
             // 使用 Object.assign 方法将 paramsObj 中的属性合并到 this.form 中
-            this.form = Object.assign(this.form, paramsObj)
           } catch (e) {
             alert(e)
           }
