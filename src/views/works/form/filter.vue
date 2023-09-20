@@ -108,7 +108,6 @@
         <el-button>返回</el-button>
       </el-form-item>
       <el-form-item label="设置预览">
-        {{form}}
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
       </el-form-item>
     </el-form>
@@ -269,7 +268,7 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
-      this.form.params = JSON.stringify(this.form)
+      this.form.params = JSON.parse(JSON.stringify(this.form))
       updateOne(this.form).then(response => {
         if (response.data.success) {
           this.$message({
