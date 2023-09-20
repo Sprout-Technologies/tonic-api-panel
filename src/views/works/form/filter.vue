@@ -126,6 +126,9 @@ export default {
   created() {
     this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
     this.fetchData(this.id)
+    if (this.id) {
+      this.form.id = this.id
+    }
   },
   data() {
     return {
@@ -268,7 +271,7 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
-      this.form.params = JSON.parse(JSON.stringify(this.form))
+      this.form.params = JSON.stringify(this.form)
       updateOne(this.form).then(response => {
         if (response.data.success) {
           this.$message({
