@@ -288,13 +288,13 @@ export default {
         this.listLoading = true
         getById(id).then(res => {
           this.listLoading = false
-          if (!res['params']) res['params'] = ''
-          try {
-            const paramsObj = JSON.parse(res['params'])
-            this.form = paramsObj
-            // 使用 Object.assign 方法将 paramsObj 中的属性合并到 this.form 中
-          } catch (e) {
-            alert(e)
+          if (res['params']) {
+            try {
+              const paramsObj = JSON.parse(res['params'])
+              this.form = { ...this.form, ...paramsObj }
+            } catch (e) {
+              console.error('解析 params 失败', e)
+            }
           }
         })
       }
@@ -302,8 +302,3 @@ export default {
   }
 }
 </script>
-<style>
-.row-spacing {
-  margin-bottom: 20px;
-}
-</style>

@@ -134,27 +134,28 @@
 </template>
 
 <script>
-import {getAnswers} from "@/api/survey"
+import { getAnswers } from '@/api/survey'
 import Sortable from 'sortablejs'
+import {deleteById} from "../../api/post";
 
 const moment = require('moment')
 export default {
   data() {
     return {
-        // newList:[],
-      localUrl : window.location.href.split("://")[0]+"://"+window.location.href.split("://")[1].split('/')[0].replace("1238","1240").replace("1237","1240")+'/api/v2/upload/upload_contents/',
-        list: null,
+      // newList:[],
+      localUrl: window.location.href.split('://')[0] + '://' + window.location.href.split('://')[1].split('/')[0].replace('1238', '1240').replace('1237', '1240') + '/api/v2/upload/upload_contents/',
+      list: null,
       listLoading: true,
       listQuery: {
         size: 99999,
         page: 0,
-        sort:['updatedAt,desc'],
+        sort: ['updatedAt,desc']
       },
-      questionsHead:[],
-      total:0,
-      currPage:1,
-      maxPage:0,
-      dialogFormVisible:null
+      questionsHead: [],
+      total: 0,
+      currPage: 1,
+      maxPage: 0,
+      dialogFormVisible: null
     }
   },
   filter: {
@@ -169,19 +170,18 @@ export default {
   },
   created() {
     this.fetchData()
-
   },
   methods: {
-    getList(){
+    getList() {
       this.listLoading = true
       return getAnswers().then(response => {
-        if(response) {
+        if (response) {
           this.list = response.map(i => {
             // this.dialogFormVisible = i.id
             i.content = JSON.parse(i.content)
-            for(var qIdx in i.content.questions){
+            for (var qIdx in i.content.questions) {
               var q = i.content.questions[qIdx]
-              if(!this.questionsHead.includes(q.title)){
+              if (!this.questionsHead.includes(q.title)) {
                 this.questionsHead.push(q.title)
               }
             }
@@ -193,121 +193,114 @@ export default {
         // this.currPage = this.listQuery.page + 1
         // this.maxPage = response.totalPages
         this.listLoading = false
-          // this.newList = this.list.map((v,idx) => idx)
-
+        // this.newList = this.list.map((v,idx) => idx)
       })
     },
     fetchData() {
       this.getList()
     },
 
-
-    handleEdit(idx,r){
-      let pushDest = r ? { name: '答卷表单', params: { id: r.id }} : { name: '答卷表单' , params: { id: 'create'}}
+    handleEdit(idx, r) {
+      const pushDest = r ? { name: '答卷表单', params: { id: r.id }} : { name: '答卷表单', params: { id: 'create' }}
       this.$router.push(pushDest)
     },
 
-      handleDelete(idx,r){
+    handleDelete(idx, r) {
       this.$confirm('删除不可逆，如果要下架，请到表单页勾选下架选项！确定要删除吗？', '提示', {
-          confirmButtonText: '我确定要删除',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          deleteById(r.id).then(res=>{
-              this.$message({
-                type: 'success',
-                message: '删除成功!'
-              });
-            this.fetchData()
+        confirmButtonText: '我确定要删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteById(r.id).then(res => {
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
           })
-
-        }).catch((r) => {
-          this.$message({
-            type: r ? 'error' : 'info',
-            message: '删除失败'
-          });
-        });
+          this.fetchData()
+        })
+      }).catch((r) => {
+        this.$message({
+          type: r ? 'error' : 'info',
+          message: '删除失败'
+        })
+      })
     },
 
-    handleBatchPublish(){
+    handleBatchPublish() {
       this.$confirm('发布不可逆，请确认。', '提示', {
         confirmButtonText: '我确定要发布',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        publishBatch().then(res=>{
+        publishBatch().then(res => {
           this.$message({
             type: 'success',
             message: '发布成功!'
-          });
+          })
           this.fetchData()
         })
-
       }).catch((r) => {
         console.logr(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
-        });
-      });
+        })
+      })
     },
 
-
-    handlePublish(idx,r){
+    handlePublish(idx, r) {
       this.$confirm('发布不可逆，请确认。', '提示', {
         confirmButtonText: '我确定要发布',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        publishById(r.id).then(res=>{
+        publishById(r.id).then(res => {
           this.$message({
             type: 'success',
             message: '发布成功!'
-          });
+          })
           this.fetchData()
         })
-
       }).catch((r) => {
         console.logr(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
-        });
-      });
+        })
+      })
     },
 
-    handleOpenDialog(idx, r){
+    handleOpenDialog(idx, r) {
       console.log(idx)
       console.log(r)
       this.dialogFormVisible = r.id
       console.log(this.dialogFormVisible)
       this.$forceUpdate()
     },
-    handleClose(){
+    handleClose() {
       this.$confirm('关闭入口，请确认。', '提示', {
         confirmButtonText: '我确定要关闭',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        close().then(res=>{
+        close().then(res => {
           this.$message({
             type: 'success',
             message: '成功!'
-          });
+          })
           this.fetchData()
         })
-
       }).catch((r) => {
         console.logr(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '失败'
-        });
-      });
+        })
+      })
     },
 
-    handleFilter(){
-      if(!this.listQuery.name){delete this.listQuery.name}
+    handleFilter() {
+      if (!this.listQuery.name) { delete this.listQuery.name }
       this.listQuery.page = 0
       this.getList()
     },
@@ -323,16 +316,16 @@ export default {
     },
 
     handleRemove(file, fileList) {
-      console.log(file, fileList);
+      console.log(file, fileList)
     },
     handlePreview(file) {
-      console.log(file);
+      console.log(file)
     },
     handleExceed(files, fileList) {
-      this.$message.warning(`当前限制选择 1 个文件`);
+      this.$message.warning(`当前限制选择 1 个文件`)
     },
     beforeRemove(file, fileList) {
-      return this.$confirm(`确定移除 ${ file.name }？`);
+      return this.$confirm(`确定移除 ${file.name}？`)
     },
     handleUploadSuccess(res, file) {
       this.$message({
@@ -340,7 +333,7 @@ export default {
         type: 'success'
       })
       this.fetchData()
-    },
+    }
 
   }
 }
