@@ -4,6 +4,20 @@
       <el-form-item label="滤镜名">
         <el-input v-model="form.name"></el-input>
       </el-form-item>
+      <el-form-item label="Preview Cover Image">
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :on-success="handlePreviewCoverImageSuccess"
+          :before-upload="beforeAvatarUpload"
+        >
+          <img v-if="form.preview_cover_image" :src="form.preview_cover_image" class="avatar">
+          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+        </el-upload>
+        <el-col :span="12">
+          <el-input v-model="form.preview_cover_image"></el-input>
+        </el-col>
+      </el-form-item>
       <el-form-item label="去噪强度">
         <el-input-number size="mini" controls-position="right" :step="1" v-model="form.denoising_strength"></el-input-number>
       </el-form-item>
@@ -104,8 +118,7 @@
         <el-button type="text" @click="addDuration">添加 Duration</el-button>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="saveData">{{this.id ? '修改':'创建'}}</el-button>
-        <el-button>返回</el-button>
+        <el-button type="primary" @click="saveData">{{this.id ? '确认滤镜修改':'确认滤镜创建'}}</el-button>
       </el-form-item>
       <el-form-item label="设置预览">
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
@@ -252,6 +265,17 @@ export default {
     }
   },
   methods: {
+    handlePreviewCoverImageSuccess(res, file) {
+      this.form.preview_cover_image = file.response.fileDownloadUri
+      this.$forceUpdate()
+    },
+    beforeAvatarUpload(file) {
+      const isJPG = file.type.indexOf('image') >= 0
+      if (!isJPG) {
+        this.$message.error('只能上传图片!')
+      }
+      return isJPG
+    },
     addDuration() {
       this.form.durations.push({
         start: 0,

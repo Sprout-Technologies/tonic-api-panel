@@ -76,14 +76,6 @@ export function exportData(data) {
   window.open(request.baseURL + 'filter/export/' + data.id)
 }
 
-export function updateOrder(data) {
-  return request({
-    url: '/filter/order',
-    method: 'post',
-    data: data
-  })
-}
-
 export async function getBuffer(url) {
   const response = await axios.get(url, { responseType: 'arraybuffer' })
   const buffer = Buffer.from(response.data, 'utf-8')
