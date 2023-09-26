@@ -76,10 +76,10 @@
   </div>
 </template>
 
-<script>　
-import {updateOne, getByIdAdmin} from "@/api/post"
+<script>
+import { updateOne, getByIdAdmin } from '@/api/post'
 // import {getList as getCategoryList} from "@/api/category"
-import {getUploadFileURL, getUploadToken} from '@/api/upload'
+import { getUploadFileURL, getUploadToken } from '@/api/upload'
 const moment = require('moment')
 
 export default {
@@ -89,21 +89,21 @@ export default {
   },
   data() {
     return {
-      render:false,
-      fileList:[],
-      loading:true,
-      id:null,
+      render: false,
+      fileList: [],
+      loading: true,
+      id: null,
       centerDialogVisible: false,
       html: '',
       form: {
-        featured:false,
-        category:{id:2},
-        createdAt:Date.now(),
-        latest:{title:'',content: '',thumbnail:'',mainVersion:0,subVersion:0,published:false,createdAt:Date.now()},
-        products:[]
+        featured: false,
+        category: { id: 2 },
+        createdAt: Date.now(),
+        latest: { title: '', content: '', thumbnail: '', mainVersion: 0, subVersion: 0, published: false, createdAt: Date.now() },
+        products: []
       },
       uploadAction: getUploadFileURL(),
-      uploadToken:getUploadToken(),
+      uploadToken: getUploadToken(),
       activeNames: '0',
       products: [],
       categories: []
@@ -135,32 +135,31 @@ export default {
       //     }
       //   });
       // }
-      updateOne(this.form).then(()=>{
-          this.$message({
-            message: '提交成功!',
-            type: 'success'
-          })
-          this.onCancel()
-        }
+      updateOne(this.form).then(() => {
+        this.$message({
+          message: '提交成功!',
+          type: 'success'
+        })
+        this.onCancel()
+      }
       )
     },
     handleAvatarSuccess(res, file) {
-      this.form.latest.thumbnail = file.response.fileDownloadUri;
+      this.form.latest.thumbnail = file.response.fileDownloadUri
       this.$forceUpdate()
-
     },
     beforeAvatarUpload(file) {
-      const isJPG = file.type.indexOf('image')>=0;
+      const isJPG = file.type.indexOf('image') >= 0
 
       if (!isJPG) {
-        this.$message.error('只能上传图片!');
+        this.$message.error('只能上传图片!')
       }
-      return isJPG;
+      return isJPG
     },
     onCancel() {
       this.$router.back(-1)
     },
-    onPreview(){
+    onPreview() {
 
     },
     fetchData(id) {
@@ -168,16 +167,14 @@ export default {
       // getCategoryList().then(res=>{
       //   this.categories = res
       // })
-      if(id) {
+      if (id) {
         getByIdAdmin(id).then(res => {
-          this.form = res;
+          this.form = res
           this.loading = false
         })
-      }
-      else{
+      } else {
         this.loading = false
       }
-
     }
   }
 }

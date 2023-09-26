@@ -4,19 +4,18 @@
       <el-form-item label="滤镜名">
         <el-input v-model="form.name"></el-input>
       </el-form-item>
-      <el-form-item label="Preview Cover Image">
+      <el-form-item label="预览图">
         <el-upload
           class="avatar-uploader"
           :show-file-list="false"
-          :on-success="handlePreviewCoverImageSuccess"
           :before-upload="beforeAvatarUpload"
+          :action="uploadAction"
+          :headers="uploadToken"
+          :on-change="(a,b)=>handlePreviewCoverImageSuccess(a,b)"
         >
           <img v-if="form.preview_cover_image" :src="form.preview_cover_image" class="avatar">
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
         </el-upload>
-        <el-col :span="12">
-          <el-input v-model="form.preview_cover_image"></el-input>
-        </el-col>
       </el-form-item>
       <el-form-item label="去噪强度">
         <el-input-number size="mini" controls-position="right" :step="1" v-model="form.denoising_strength"></el-input-number>
@@ -91,11 +90,6 @@
               </el-form-item>
             </el-col>
             <el-col :span="4" class="row-spacing">
-              <el-form-item label="Montage">
-                <el-checkbox v-model="duration.montage"></el-checkbox>
-              </el-form-item>
-            </el-col>
-            <el-col :span="4" class="row-spacing">
               <el-form-item label="Frame per Style">
                 <el-input-number v-model="duration.frame_per_style"></el-input-number>
               </el-form-item>
@@ -130,6 +124,8 @@
 
 <script>
 import { getById, updateOne } from '@/api/filter'
+import { getUploadFileURL, getUploadToken } from '@/api/upload'
+
 import MySelect from './MySelect.vue'
 
 export default {
@@ -146,6 +142,8 @@ export default {
   data() {
     return {
       listLoading: false,
+      uploadAction: getUploadFileURL(),
+      uploadToken: getUploadToken(),
       form: {
         name: '',
         denoising_strength: null,
@@ -159,7 +157,8 @@ export default {
         trigger_prompt: '',
         gender_prompt: '',
         temporalnet: null,
-        durations: []
+        durations: [],
+        preview_cover_image: ''
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -173,7 +172,6 @@ export default {
         'dreamShaperInpaint': 'general\\dreamshaper_8Inpainting.safetensors',
         'meinaUnrealInpaint': 'general\\meinaunreal_v41-inpainting.safeFtensors',
         'meinaMixInpaint': 'general\\meinamix_v11-inpainting.safetensors'
-
       },
 
       tile: {
@@ -266,8 +264,11 @@ export default {
   },
   methods: {
     handlePreviewCoverImageSuccess(res, file) {
-      this.form.preview_cover_image = file.response.fileDownloadUri
-      this.$forceUpdate()
+      console.log(res, 'res')
+      if (res.response) {
+        this.form.preview_cover_image = res.response.fileDownloadPath
+        this.form.icon = res.response.fileDownloadPath
+      }
     },
     beforeAvatarUpload(file) {
       const isJPG = file.type.indexOf('image') >= 0
@@ -283,7 +284,6 @@ export default {
         style: [],
         type: null,
         interpolation: false,
-        montage: false,
         frame_per_style: 0,
         outpaint: {
           mask_vid: '',
@@ -297,11 +297,12 @@ export default {
     saveData() {
       this.form.params = JSON.stringify(this.form)
       updateOne(this.form).then(response => {
-        if (response.data.success) {
+        if (response.success) {
           this.$message({
             message: '保存成功',
             type: 'success'
           })
+          this.$router.push('/filter')
         } else {
           this.$message.error('保存失败')
         }
