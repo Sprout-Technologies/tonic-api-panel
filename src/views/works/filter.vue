@@ -56,8 +56,8 @@
         border fit highlight-current-row>
         <el-table-column align="center" label="缩略图" width="70">
           <template slot-scope="scope">
-            <div v-if="scope.row.icon" style="background-color: black; width: 50px; height: 50px">
-              <img :src="scope.row.icon" width="50" height="50"/>
+            <div v-if="scope.row.icon || scope.row.preview_cover_image" style="background-color: black; width: 50px; height: 50px">
+              <img :src="scope.row.icon|| scope.row.preview_cover_image" width="50" height="50"/>
             </div>
           </template>
         </el-table-column>
@@ -65,15 +65,6 @@
           prop="name"
           label="名称">
         </el-table-column>
-        <!--        <el-table-column-->
-        <!--          prop="hidden"-->
-        <!--          label="隐藏" align="center" width="100px">-->
-        <!--          <template slot-scope="scope">-->
-        <!--            {{scope.row.hidden ? '是' : '否'}}-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
-
-
         <el-table-column label="更新时间">
           <template slot-scope="scope">
             {{scope.row.updatedAt | moment('YYYY-MM-DD hh:mm:ss')}}
@@ -85,20 +76,6 @@
             {{scope.row.createdAt | moment('YYYY-MM-DD hh:mm:ss')}}
           </template>
         </el-table-column>
-
-        <!--        <el-table-column label="发布时间">-->
-        <!--          <template slot-scope="scope">-->
-        <!--            {{scope.row.publishedAt | moment('YYYY-MM-DD hh:mm:ss')}}-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
-
-
-
-        <!--        <el-table-column label="艺术家">-->
-        <!--          <template slot-scope="scope">-->
-        <!--            {{scope.row.artists && scope.row.artists.length ? scope.row.artists.map(i=>i.name).reduce((a,b)=>a+' '+b) : ''}}-->
-        <!--          </template>-->
-        <!--        </el-table-column>-->
         <el-table-column class-name="status-col" label="操作" width="200" align="center">
           <template slot-scope="scope">
             <el-button-group>
