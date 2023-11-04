@@ -71,6 +71,13 @@ export function updateBatch(data) {
     data: data
   })
 }
+export function getFilterStyle(data) {
+  return request({
+    url: '/filterStyle',
+    method: 'get',
+    data: data
+  })
+}
 
 export function exportData(data) {
   window.open(request.baseURL + 'filter/export/' + data.id)

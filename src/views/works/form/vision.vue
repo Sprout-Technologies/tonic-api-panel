@@ -69,94 +69,92 @@
 </template>
 
 <script>
-  import {updateOne, getById} from "@/api/vision"
-  import {getUploadFileURL, getUploadToken} from '@/api/upload'
-import {queryList as queryAristsList} from "@/api/artist"
+  import { updateOne, getById } from '@/api/vision'
+  import { getUploadFileURL, getUploadToken } from '@/api/upload'
+import { queryList as queryAristsList } from '@/api/artist'
 
   export default {
-    created(){
+    created() {
       this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
       this.fetchData(this.id)
     },
     data() {
       return {
-              artists:[],
+        artists: [],
 
-        products:[],
+        products: [],
         uploadAction: getUploadFileURL(),
-        uploadToken:getUploadToken(),
+        uploadToken: getUploadToken(),
         listLoading: false,
-        form:{
+        form: {
           name: '',
           publishedAt: new Date(),
           artistsMusic: [],
-                    artistsVision: []
-
+          artistsVision: []
         }
       }
     },
 
     methods: {
-          handleArtistsChange(val){
-      let newVal = this.form.artistsMusic[this.form.artistsMusic.length-1]
-      let str = typeof newVal === 'object' ? newVal.name : newVal;
-      this.form.artistsMusic = this.form.artistsMusic.filter((artists,index)=>{if(index>=this.form.artists.length-1) return true; if(typeof artists === 'string') return artists!==str;else return artists.name!==str;})
-    },
-        handleArtistsVisionChange(val){
-      let newVal = this.form.artistsVision[this.form.artistsVision.length-1]
-      let str = typeof newVal === 'object' ? newVal.name : newVal;
-      this.form.artistsVision = this.form.artistsVision.filter((artists,index)=>{if(index>=this.form.artists.length-1) return true; if(typeof artists === 'string') return artists!==str;else return artists.name!==str;})
-    },
+      handleArtistsChange(val) {
+        const newVal = this.form.artistsMusic[this.form.artistsMusic.length - 1]
+        const str = typeof newVal === 'object' ? newVal.name : newVal
+        this.form.artistsMusic = this.form.artistsMusic.filter((artists, index) => { if (index >= this.form.artists.length - 1) return true; if (typeof artists === 'string') return artists !== str; else return artists.name !== str })
+      },
+      handleArtistsVisionChange(val) {
+        const newVal = this.form.artistsVision[this.form.artistsVision.length - 1]
+        const str = typeof newVal === 'object' ? newVal.name : newVal
+        this.form.artistsVision = this.form.artistsVision.filter((artists, index) => { if (index >= this.form.artists.length - 1) return true; if (typeof artists === 'string') return artists !== str; else return artists.name !== str })
+      },
       onSubmit() {
-              this.form.artistsMusic = this.form.artistsMusic.map(product => {
-        if (typeof product === 'string') {
-          return {
-            name: product,
+        this.form.artistsMusic = this.form.artistsMusic.map(product => {
+          if (typeof product === 'string') {
+            return {
+              name: product
+            }
+          } else {
+            return product
           }
-        } else {
-          return product
-        }
-      });
-                    this.form.artistsVision = this.form.artistsVision.map(product => {
-        if (typeof product === 'string') {
-          return {
-            name: product,
+        })
+        this.form.artistsVision = this.form.artistsVision.map(product => {
+          if (typeof product === 'string') {
+            return {
+              name: product
+            }
+          } else {
+            return product
           }
-        } else {
-          return product
-        }
-      });
-        updateOne(this.form).then(()=>this.onCancel())
+        })
+        updateOne(this.form).then(() => this.onCancel())
       },
       reset() {
-        this.form={
-          tag:  {id:null}
+        this.form = {
+          tag: { id: null }
         }
       },
       onCancel() {
         this.$router.back(-1)
       },
       fetchData(id) {
-                  queryAristsList({size:99999}).then(res=>this.artists = res)
+        queryAristsList({ size: 99999 }).then(res => this.artists = res)
 
-        if(id){
+        if (id) {
           this.listLoading = true
-          getById(id).then(res=>{this.listLoading = false;this.form=res})
+          getById(id).then(res => { this.listLoading = false; this.form = res })
         }
       },
       handleAvatarSuccess(res, file) {
-        this.form.thumb = file.response.fileDownloadUri;
+        this.form.thumb = file.response.fileDownloadUri
         this.$forceUpdate()
-
       },
       beforeAvatarUpload(file) {
-        const isJPG = file.type.indexOf('image')>=0;
+        const isJPG = file.type.indexOf('image') >= 0
 
         if (!isJPG) {
-          this.$message.error('只能上传图片!');
+          this.$message.error('只能上传图片!')
         }
 
-        return isJPG;
+        return isJPG
       }
     }
   }

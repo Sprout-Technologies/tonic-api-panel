@@ -80,11 +80,8 @@
             </el-col>
             <el-col :span="8" class="row-spacing">
               <el-form-item label="Styles">
-                <el-select v-model="duration.style" multiple placeholder="Styles">
-                  <el-option label="ANIME" value="ANIME"></el-option>
-                  <el-option label="TENG" value="TENG"></el-option>
-                  <el-option label="VALORANT" value="VALORANT"></el-option>
-                  <el-option label="NEON" value="NEON"></el-option>
+                <el-select v-model="duration.style" placeholder="Styles">
+                  <el-option v-for="item in stylesEnum" :label="item.name" :value="item.config" :key="item.name"/>
                 </el-select>
               </el-form-item>
             </el-col>
@@ -146,7 +143,7 @@
 
 
 <script>
-import { getById, updateOne } from '@/api/filter'
+import { getById, updateOne, getFilterStyle } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
 import axios from 'axios'
 import MySelect from './MySelect.vue'
@@ -158,6 +155,7 @@ export default {
   created() {
     this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
     this.fetchData(this.id)
+    this.fetchStylesEnum()
     if (this.id) {
       this.form.id = this.id
     }
@@ -165,6 +163,7 @@ export default {
 
   data() {
     return {
+      stylesEnum: [],
       listLoading: false,
       uploadAction: getUploadFileURL(),
       uploadToken: getUploadToken(),
@@ -412,6 +411,12 @@ export default {
         duration.endFrames = Math.round((duration.end - duration.endSeconds) * 30)
       })
       this.form = { ...filter }
+    },
+    fetchStylesEnum() {
+      getFilterStyle().then(res => {
+        this.stylesEnum = res
+        console.log(this.stylesEnum, 'stylesEnum')
+      })
     },
     fetchData(id) {
       if (id) {
