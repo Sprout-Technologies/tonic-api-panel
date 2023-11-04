@@ -11,7 +11,6 @@
         <!--              <el-option v-for="t in artists.content" :key="t.name" :label="t.name" :value="t.id">-->
         <!--              </el-option>-->
         <!--        </el-select>-->
-
         <el-button type="primary" @click="handleFilter()" plain>
           <i class="el-icon-search"></i>
           <span>搜索</span>
@@ -108,7 +107,6 @@ import { queryList, deleteById, publishById, inform, publishBatch, updateOrder, 
 import Sortable from 'sortablejs'
 import { getImportFileURL, getUploadToken } from '@/api/upload'
 
-const moment = require('moment')
 export default {
   data() {
     return {

@@ -4,7 +4,7 @@
       v-for="(optionValue, optionKey) in options"
       :key="optionKey"
       :label="optionKey"
-      :value="optionKey">
+      :value="optionValue">
     </el-option>
   </el-select>
 </template>
@@ -23,10 +23,10 @@ export default {
   computed: {
     model: {
       get() {
-        return Object.keys(this.options).find(key => this.options[key] === this.value)
+        return this.value;
       },
-      set(newKey) {
-        this.$emit('input', this.options[newKey])
+      set(newValue) {
+        this.$emit('input', newValue);
       }
     }
   },

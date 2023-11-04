@@ -1,6 +1,12 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="form" label-width="120px">
+      <el-form-item label="导入测试滤镜">
+        <el-button type="primary" @click="handleImportTemplate()" plain>
+          <i class="el-icon-files"></i>
+          <span>导入测试滤镜（Template)</span>
+        </el-button>
+      </el-form-item>
       <el-form-item label="滤镜名">
         <el-input v-model="form.name"></el-input>
       </el-form-item>
@@ -55,24 +61,27 @@
       </el-form-item>
       <el-form-item label="Durations">
         <div v-for="(duration, index) in form.durations" :key="index">
-          <el-row gutter={20}>
+          <el-row>
             <el-col :span="4" class="row-spacing">
-              <el-form-item label="Start">
-                <el-input-number v-model="duration.start"></el-input-number>
+              <el-form-item label="Start(秒)">
+                <el-input-number v-model="duration.startSeconds"></el-input-number>
+              </el-form-item>
+              <el-form-item label="Start(帧)">
+                <el-input-number v-model="duration.startFrames"></el-input-number>
               </el-form-item>
             </el-col>
             <el-col :span="4" class="row-spacing">
-              <el-form-item label="End">
-                <el-input-number v-model="duration.end"></el-input-number>
+              <el-form-item label="End(秒)">
+                <el-input-number v-model="duration.endSeconds"></el-input-number>
+              </el-form-item>
+              <el-form-item label="End(帧)">
+                <el-input-number v-model="duration.endFrames"></el-input-number>
               </el-form-item>
             </el-col>
             <el-col :span="8" class="row-spacing">
               <el-form-item label="Styles">
-                <el-select v-model="duration.style" multiple placeholder="Styles">
-                  <el-option label="ANIME" value="ANIME"></el-option>
-                  <el-option label="TENG" value="TENG"></el-option>
-                  <el-option label="VALORANT" value="VALORANT"></el-option>
-                  <el-option label="NEON" value="NEON"></el-option>
+                <el-select v-model="duration.style" placeholder="Styles">
+                  <el-option v-for="item in stylesEnum" :label="item.name" :value="item.config" :key="item.name"/>
                 </el-select>
               </el-form-item>
             </el-col>
@@ -89,17 +98,17 @@
                 <el-checkbox v-model="duration.interpolation"></el-checkbox>
               </el-form-item>
             </el-col>
-            <el-col :span="4" class="row-spacing">
+            <el-col :span="4" class="row-spacing" >
               <el-form-item label="Frame per Style">
                 <el-input-number v-model="duration.frame_per_style"></el-input-number>
               </el-form-item>
             </el-col>
-            <el-col :span="8" class="row-spacing">
+            <el-col :span="8" class="row-spacing" v-if="duration.outpaint">
               <el-form-item label="Mask Vid">
                 <el-input v-model="duration.outpaint.mask_vid"></el-input>
               </el-form-item>
             </el-col>
-            <el-col :span="8" class="row-spacing">
+            <el-col :span="8" class="row-spacing" v-if="duration.outpaint">
               <el-form-item label="Mask Sd">
                 <el-input v-model="duration.outpaint.mask_sd"></el-input>
               </el-form-item>
@@ -118,14 +127,25 @@
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
       </el-form-item>
     </el-form>
+    <el-dialog v-if="showImportModal" title="导入测试滤镜" :visible.sync="showImportModal"   @close="handleDialogClose">
+      <el-progress v-if="loading" type="line" :percentage="progressPercentage" :stroke-width="2" />
+      <el-scrollbar style="height: 400px;" v-else>
+      <el-row v-for="(filter, index) in exampleData" :key="index" class="filter-item">
+        <el-col :span="20">{{ filter.name }}</el-col>
+        <el-col :span="4">
+          <el-button size="mini" type="primary" @click="importFilter(filter)">导入</el-button>
+        </el-col>
+      </el-row>
+        </el-scrollbar>
+    </el-dialog>
   </div>
 </template>
 
 
 <script>
-import { getById, updateOne } from '@/api/filter'
+import { getById, updateOne, getFilterStyle } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
-
+import axios from 'axios'
 import MySelect from './MySelect.vue'
 
 export default {
@@ -135,15 +155,22 @@ export default {
   created() {
     this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
     this.fetchData(this.id)
+    this.fetchStylesEnum()
     if (this.id) {
       this.form.id = this.id
     }
   },
+
   data() {
     return {
+      stylesEnum: [],
       listLoading: false,
       uploadAction: getUploadFileURL(),
       uploadToken: getUploadToken(),
+      showImportModal: false,
+      exampleData: [],
+      loading: false,
+      progressPercentage: 0,
       form: {
         name: '',
         denoising_strength: null,
@@ -281,6 +308,10 @@ export default {
       this.form.durations.push({
         start: 0,
         end: 0,
+        startSeconds: 0,
+        startFrames: 0,
+        endSeconds: 0,
+        endFrames: 0,
         style: [],
         type: null,
         interpolation: false,
@@ -310,6 +341,83 @@ export default {
         this.$message.error('保存失败: ' + error)
       })
     },
+    handleDialogClose() {
+      this.showImportModal = false
+    },
+    handleImportTemplate() {
+      this.showImportModal = !this.showImportModal
+      this.loading = true // 设置 loading 为 true
+      this.progressPercentage = 0 // 重置进度条的值为0
+
+      const url = 'https://api.jsonsilo.com/public/4eb4bf97-3561-416d-9a69-509f392f96c6'
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+
+      const instance = axios.create()
+      instance.defaults.onDownloadProgress = (progressEvent) => {
+        const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        this.progressPercentage = percentage // 更新进度条的值
+      }
+
+      let progress = 0
+      const increaseProgress = () => {
+        if (progress < 100) {
+          progress += 2 // 每次增加2%，可以根据需要调整增加速度
+          if (progress > 100) {
+            progress = 100 // 确保进度不超过100%
+          }
+          this.progressPercentage = progress // 更新进度条的值
+          setTimeout(increaseProgress, 50) // 每50毫秒增加一次进度，可以根据需要调整增加频率
+        } else {
+          this.loading = false // 请求完成后，将 loading 设置为 false
+        }
+      }
+
+      const handleProgress = (progressEvent) => {
+        if (progressEvent.lengthComputable) {
+          const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          this.progressPercentage = percentage // 更新进度条的值
+        }
+      }
+
+      instance
+        .get(url, { headers: headers, onDownloadProgress: handleProgress })
+        .then((response) => {
+          this.exampleData = response.data
+          console.log(this.exampleData[0], 'test')
+        })
+        .catch((error) => {
+          console.error('There was an error with the request:', error)
+        })
+        .finally(() => {
+          this.loading = false // 请求完成后，将 loading 设置为 false
+        })
+
+      setTimeout(increaseProgress, 500) // 从0开始增加进度
+    },
+    importFilter(filter) {
+      // 清空表单数据对象的 durations 数组
+      this.form.durations = []
+      console.log(filter, 'filter')
+      // 复制滤镜对象的属性
+      filter.durations.forEach(duration => {
+        // 计算 startSeconds 和 startFrames
+        duration.startSeconds = Math.floor(duration.start)
+        duration.startFrames = Math.round((duration.start - duration.startSeconds) * 30)
+
+        // 计算 endSeconds 和 endFrames
+        duration.endSeconds = Math.floor(duration.end)
+        duration.endFrames = Math.round((duration.end - duration.endSeconds) * 30)
+      })
+      this.form = { ...filter }
+    },
+    fetchStylesEnum() {
+      getFilterStyle().then(res => {
+        this.stylesEnum = res
+        console.log(this.stylesEnum, 'stylesEnum')
+      })
+    },
     fetchData(id) {
       if (id) {
         this.listLoading = true
@@ -329,3 +437,14 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.row-spacing{
+  margin-bottom: 20px;
+}
+.filter-item{
+  margin:10px;
+  display: flex;
+  align-items: center;
+}
+</style>
