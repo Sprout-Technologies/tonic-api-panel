@@ -40,29 +40,43 @@
             {{scope.row.id}}
           </template>
         </el-table-column>
-        <el-table-column align="center" label='用户id'>
+        <el-table-column align="center" label='Video id'>
           <template slot-scope="scope">
-            {{scope.row.user.id}}
+            {{scope.row.videos[0].id}}
+          </template>
+        </el-table-column>
+        <el-table-column align="center" label='滤镜名'>
+          <template slot-scope="scope">
+            {{scope.row.videos[0].filter.name}}
+          </template>
+        </el-table-column>
+        <el-table-column align="center" label='缩略图'>
+          <template slot-scope="scope">
+            <div v-if="scope.row.videos[0].thumbnail" style="background-color: black; max-height: 50px;">
+              <img :src="scope.row.videos[0].thumbnail" style="max-height: 50px;"/>
+              <img :src="scope.row.videos[0].thumbnail.replace('last_preview','first_frame')" style="max-height: 50px;"/>
+
+            </div>
           </template>
         </el-table-column>
         <el-table-column
           prop="hidden"
           label="用户" align="center">
           <template slot-scope="scope">
-            {{scope.row.user.nickname}}
+            {{scope.row.user.nickname}}({{scope.row.user.id}})
           </template>
         </el-table-column>
         <!--<el-table-column-->
           <!--prop="name"-->
           <!--label="URL别名" align="center">-->
         <!--</el-table-column>-->
-        <el-table-column
-          prop="captions"
-          label="内容" align="center">
-          <template slot-scope="scope">
-            {{scope.row.captions && scope.row.captions.length > 0 ? scope.row.captions[0].content: ""}}
-          </template>
-        </el-table-column>
+<!--        <el-table-column-->
+<!--          prop="captions"-->
+<!--          label="内容" align="center">-->
+<!--          <template slot-scope="scope">-->
+<!--            {{scope.row.captions && scope.row.captions.length > 0 ? scope.row.captions[0].content: ""}}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
 <!--        <el-table-column-->
 <!--          prop="featured"-->
 <!--          label="置顶" align="center" width="100px">-->
@@ -97,6 +111,8 @@
           <template slot-scope="scope">
             <el-button-group>
               <el-button type="primary" icon="el-icon-edit" size="mini" @click="handleEdit(scope.$index, scope.row)"></el-button>
+              <el-button type="primary" icon="el-icon-document-copy" size="mini" @click="copyVidUrlToClipboard(scope.row.videos[0])"></el-button>
+
               <el-button type="danger" icon="el-icon-delete" size="mini" @click="handleDelete(scope.$index, scope.row)"></el-button>
             </el-button-group>
           </template>
@@ -175,6 +191,11 @@
         // getProductsList().then(res=>{
         //   this.products = res
         // })
+      },
+      copyVidUrlToClipboard (video) {
+        var url = video.highresUrl
+        if (!url){url = video.url}
+        navigator.clipboard.writeText(url).then(() => {this.$message.success('复制成功')})
       },
       getList(){
         this.listLoading = true

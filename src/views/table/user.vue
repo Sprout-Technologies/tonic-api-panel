@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-header style="text-align: right; font-size: 12px">
-      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="邮箱搜索" v-model="listQuery.mail">
+      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="邮箱搜索" v-model="listQuery.id">
       </el-input>
-      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="用户名搜索" v-model="listQuery.username">
+      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="用户名搜索" v-model="listQuery.nickname">
       </el-input>
       <el-button type="primary" @click="handleFilter()" plain>
         <i class="el-icon-search"></i>
@@ -25,7 +25,7 @@
       element-loading-text="Loading"
       :default-sort = "{prop: 'createdAt', order: 'ascending'}"
       border fit highlight-current-row>
-        <el-table-column sortable align="center" prop="id" label='序号' width="95">
+        <el-table-column sortable align="center" prop="id" label='id' width="95">
         </el-table-column>
         <el-table-column sortable
           prop="nickname"
@@ -36,10 +36,10 @@
           label="电话" width="110" align="center">
         </el-table-column>
         <el-table-column sortable
-          prop="role"
+          prop="deleted"
           label="权限" width="110" align="center">
           <template slot-scope="scope">
-            {{scope.row.role === 1 ? '正常用户' : scope.row.role === 99 ? '管理员' : '未验证用户'}}
+            {{scope.row.deleted ? '已删除' : '正常用户'}}
           </template>
         </el-table-column>
 <!--        <el-table-column-->
@@ -159,8 +159,8 @@ export default {
         });
     },
     handleFilter(){
-      if(!this.listQuery.mail){delete this.listQuery.mail}
-      if(!this.listQuery.username){delete this.listQuery.username}
+      if(!this.listQuery.id){delete this.listQuery.id}
+      if(!this.listQuery.nickname){delete this.listQuery.nickname}
       this.listQuery.page = 0
       this.getList()
     },

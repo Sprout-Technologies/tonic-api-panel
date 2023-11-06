@@ -45,6 +45,20 @@ export function updateOne(data) {
   })
 }
 
+export function feature(id) {
+  return request({
+    url: '/admin/post/feature/'+id,
+    method: 'get',
+  })
+}
+
+export function demo(id) {
+  return request({
+    url: '/admin/post/demo/'+id,
+    method: 'get',
+  })
+}
+
 export function publish(id) {
   return request({
     url: '/admin/post/publish/'+id,

@@ -107,58 +107,58 @@ export const constantRouterMap = [
   //     },
     ]
   },
-  {
-    path: '/survey',
-    component: Layout,
-    redirect: '/survey/surveyEdit',
-    name: '问卷',
-    meta: { title: '问卷', icon: 'edit' },
-    children: [
-      {
-        path: 'surveyEdit',
-        name: '问卷编辑',
-        component: () => import('@/views/works/survey'),
-        meta: { title: '问卷列表', icon: 'guide' }
-      },
-      {
-        path: 'surveyEdit/:id',
-        name: '问卷表单',
-        hidden: true,
-
-        component: () => import('@/views/works/form/survey'),
-        meta: { title: '问卷表单' }
-      },
-      {
-        path: 'surveyResponse',
-        name: '答卷编辑',
-        component: () => import('@/views/works/answer'),
-        meta: { title: '答卷列表', icon: 'guide' }
-      },
-      {
-        path: 'surveyResponse/:id',
-        name: '答卷表单',
-        hidden: true,
-
-        component: () => import('@/views/works/form/answer'),
-        meta: { title: '答卷表单' }
-      },
-
-      //     {
-      //       path: 'vision/:id',
-      //       name: '视觉表单',
-      //       hidden: true,
-      //
-      //       component: () => import('@/views/works/form/vision'),
-      //       meta: { title: '视觉表单' }
-      //     },
-    ]
-  },
+  // {
+  //   path: '/survey',
+  //   component: Layout,
+  //   redirect: '/survey/surveyEdit',
+  //   name: '问卷',
+  //   meta: { title: '问卷', icon: 'edit' },
+  //   children: [
+  //     {
+  //       path: 'surveyEdit',
+  //       name: '问卷编辑',
+  //       component: () => import('@/views/works/survey'),
+  //       meta: { title: '问卷列表', icon: 'guide' }
+  //     },
+  //     {
+  //       path: 'surveyEdit/:id',
+  //       name: '问卷表单',
+  //       hidden: true,
+  //
+  //       component: () => import('@/views/works/form/survey'),
+  //       meta: { title: '问卷表单' }
+  //     },
+  //     {
+  //       path: 'surveyResponse',
+  //       name: '答卷编辑',
+  //       component: () => import('@/views/works/answer'),
+  //       meta: { title: '答卷列表', icon: 'guide' }
+  //     },
+  //     {
+  //       path: 'surveyResponse/:id',
+  //       name: '答卷表单',
+  //       hidden: true,
+  //
+  //       component: () => import('@/views/works/form/answer'),
+  //       meta: { title: '答卷表单' }
+  //     },
+  //
+  //     //     {
+  //     //       path: 'vision/:id',
+  //     //       name: '视觉表单',
+  //     //       hidden: true,
+  //     //
+  //     //       component: () => import('@/views/works/form/vision'),
+  //     //       meta: { title: '视觉表单' }
+  //     //     },
+  //   ]
+  // },
   {
     path: '/post',
     component: Layout,
     redirect: '/dashboard',
     name: 'Post',
-    meta: { title: 'Post&Stickers', icon: 'edit' },
+    meta: { title: 'Post&Video', icon: 'edit' },
     children: [
       {
         path: 'dashboard',
