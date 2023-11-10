@@ -260,7 +260,6 @@ export default {
         'normal_bae': { 'module': 'normal_bae', 'model': 'control_v11p_sd15_normalbae [316696f1]' },
         'segmentation': { 'module': 'segmentation', 'model': 'control_v11p_sd15_seg [e1f51eb9]' },
         't2ia_sketch_pidi': { 'module': 't2ia_sketch_pidi', 'model': 't2iadapter_sketch_sd15v2 [f5789421]' }
-
       },
       stylers: {
         't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
@@ -291,7 +290,6 @@ export default {
   },
   methods: {
     handlePreviewCoverImageSuccess(res, file) {
-      console.log(res, 'res')
       if (res.response) {
         this.form.preview_cover_image = res.response.fileDownloadPath
         this.form.icon = res.response.fileDownloadPath
