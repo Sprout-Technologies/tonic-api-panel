@@ -70,6 +70,20 @@ export const constantRouterMap = [
   // },
   //
   {
+    path: '/styles',
+    component: Layout,
+    name: 'Styler',
+    meta: { title: 'Styler', icon: 'file' },
+    children: [
+      {
+        path: 'filterEdit',
+        name: 'Styler编辑',
+        component: () => import('@/views/works/styles'),
+        meta: { title: 'Styler', icon: 'guide' }
+      },
+    ]
+  },
+  {
     path: '/filter',
     component: Layout,
     redirect: '/filter',

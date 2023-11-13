@@ -39,7 +39,7 @@
         <my-select v-model="form.extractor" :options="feature_extractor" placeholder="选择勾线方法"></my-select>
       </el-form-item>
       <el-form-item label="样式提取方法">
-        <my-select v-model="form.styler" :options="stylers" placeholder="选择样式提取方法"></my-select>
+        <my-select v-model="form.styler" :options="stylesEnum" placeholder="选择样式提取方法"></my-select>
       </el-form-item>
       <el-form-item label="轮播方式">
         <el-select v-model="form.type" placeholder="选择类别">
@@ -260,26 +260,6 @@ export default {
         'normal_bae': { 'module': 'normal_bae', 'model': 'control_v11p_sd15_normalbae [316696f1]' },
         'segmentation': { 'module': 'segmentation', 'model': 'control_v11p_sd15_seg [e1f51eb9]' },
         't2ia_sketch_pidi': { 'module': 't2ia_sketch_pidi', 'model': 't2iadapter_sketch_sd15v2 [f5789421]' }
-
-      },
-      stylers: {
-        't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
-        'shuffle': {
-          'module': 'shuffle',
-          'model': 'control_v11e_sd15_shuffle [526bfdae]',
-          'weight': 1.0,
-          'start': 0.0,
-          'end': 1
-        },
-        'shuffle_weight15': {
-          'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 0.15, 'start': 0.0,
-          'end': 1
-        },
-        'shuffle_mode2': {
-          'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0,
-          'end': 1, 'control_mode': 2
-        }
-
       },
       temporalnet: {
         'default': {
@@ -291,7 +271,6 @@ export default {
   },
   methods: {
     handlePreviewCoverImageSuccess(res, file) {
-      console.log(res, 'res')
       if (res.response) {
         this.form.preview_cover_image = res.response.fileDownloadPath
         this.form.icon = res.response.fileDownloadPath
@@ -414,24 +393,28 @@ export default {
     },
     fetchStylesEnum() {
       getFilterStyle().then(res => {
-        this.stylesEnum = res
-        console.log(this.stylesEnum, 'stylesEnum')
+        this.stylesEnum = res.content
       })
     },
     fetchData(id) {
       if (id) {
         this.listLoading = true
-        getById(id).then(res => {
-          this.listLoading = false
-          if (res['params']) {
-            try {
-              const paramsObj = JSON.parse(res['params'])
-              this.form = { ...this.form, ...paramsObj }
-            } catch (e) {
-              console.error('解析 params 失败', e)
+        getById(id)
+          .then((res) => {
+            this.listLoading = false
+            if (res['params']) {
+              try {
+                const paramsObj = JSON.parse(res['params'])
+                this.form = { ...this.form, ...paramsObj }
+                this.selectedStyle = this.form.styler // 将form.styler赋值给selectedStyle
+              } catch (e) {
+                console.error('解析 params 失败', e)
+              }
             }
-          }
-        })
+          })
+          .catch((error) => {
+            console.error('获取数据失败', error)
+          })
       }
     }
   }

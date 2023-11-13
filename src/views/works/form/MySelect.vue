@@ -23,10 +23,10 @@ export default {
   computed: {
     model: {
       get() {
-        return this.value;
+        return this.value
       },
       set(newValue) {
-        this.$emit('input', newValue);
+        this.$emit('input', newValue)
       }
     }
   },
