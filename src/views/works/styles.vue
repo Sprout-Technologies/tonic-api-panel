@@ -39,8 +39,47 @@
                 ></el-option>
               </el-select>
             </template>
+            <template v-else-if="key === 'extractor'">
+              <el-select v-model="currentConfig['extractor']">
+                <el-option
+                  v-for="(ext, extKey) in feature_extractor"
+                  :key="extKey"
+                  :label="extKey"
+                  :value="JSON.stringify(ext)"
+                ></el-option>
+              </el-select>
+            </template>
+            <template v-else-if="key === 'styler'">
+              <el-select v-model="currentConfig['styler']">
+                <el-option
+                  v-for="(style, styleKey) in stylers"
+                  :key="styleKey"
+                  :label="styleKey"
+                  :value="JSON.stringify(style)"
+                ></el-option>
+              </el-select>
+            </template>
+            <template v-else-if="key === 'base_model'">
+              <el-select v-model="currentConfig['base_model']">
+                <el-option
+                  v-for="(modelPath, modelName) in base_models"
+                  :key="modelName"
+                  :label="modelName"
+                  :value="modelPath"
+                ></el-option>
+              </el-select>
+            </template>
             <template v-else>
-              <el-input v-model="currentConfig[key]"></el-input>
+              <component :is="getComponentType(key, value)" v-model="currentConfig[key]">
+                <!-- 特殊处理 select 组件的 options -->
+                <el-option
+                  v-if="getComponentType(key, value) === 'el-select'"
+                  v-for="(option, optionKey) in feature_extractor"
+                  :key="optionKey"
+                  :label="optionKey"
+                  :value="option === 'extractor' ? JSON.stringify(option) : option"
+                ></el-option>
+              </component>
             </template>
           </template>
           <!-- openpose 字段的特殊处理 -->
@@ -64,16 +103,16 @@
             </template>
           </template>
         </el-form-item>
-        <el-button type="primary" @click="saveConfig(scope.row)">保存</el-button>
+        <el-button type="primary" @click="saveConfig(currentConfig)">保存</el-button>
       </el-form>
-      <div slot="reference" class="config-preview">详情</div>
+<!--      <div slot="reference" class="config-preview">详情</div>-->
     </el-dialog>
   </div>
 </template>
 
 
 <script>
-import { getFilterStyle } from '@/api/filter'
+import { getFilterStyle, updateFilterStyle } from '@/api/filter'
 
 export default {
   data() {
@@ -103,6 +142,27 @@ export default {
         'segmentation': { 'module': 'segmentation', 'model': 'control_v11p_sd15_seg [e1f51eb9]' },
         't2ia_sketch_pidi': { 'module': 't2ia_sketch_pidi', 'model': 't2iadapter_sketch_sd15v2 [f5789421]' }
       },
+      stylers: {
+        't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
+        'shuffle': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0, 'end': 1 },
+        'shuffle_weight15': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 0.15, 'start': 0.0,
+          'end': 1 },
+        'shuffle_mode2': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0,
+          'end': 1, 'control_mode': 2 }
+      },
+      base_models: {
+        'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
+        'dreamshaper': 'general\\dreamshaper_4BakedVae.safetensors [5d18b5b494]',
+        'revAnimated': 'general\\revAnimated_v122.safetensors [ea1a6218f7]',
+        'deliberate': 'general\\deliberate_v2.safetensors [f0406fe1d4]',
+        'rundiffusionFX': 'general\\rundiffusionFX_v10.safetensors [ad1a10552b]',
+        'rundiffusionFX25D': 'general\\rundiffusionFX25D_v10.safetensors [ad1a10552b]',
+        'meinaPastelInpaint': 'general\\meinapastel_v6-inpainting.safetensors',
+        'revAnimatedInpaint': 'general\\revAnimated_v121Inp-inpainting.safetensors',
+        'dreamShaperInpaint': 'general\\dreamshaper_8Inpainting.safetensors',
+        'meinaUnrealInpaint': 'general\\meinaunreal_v41-inpainting.safeFtensors',
+        'meinaMixInpaint': 'general\\meinamix_v11-inpainting.safetensors'
+      },
       controlModes: {
         0: 'balanced',
         1: 'controlnet',
@@ -115,8 +175,12 @@ export default {
   },
   methods: {
     showDialog(row) {
+      console.log(row, 'row')
       this.currentConfig = row.configObject // 设置当前配置对象
+      this.currentConfig.id = row.id
+      this.currentConfig.name = row.name
       this.dialogVisible = true // 显示模态窗口
+      console.log(this.currentConfig, '123123')
     },
     fetchStylesEnum() {
       return getFilterStyle().then(res => {
@@ -131,16 +195,72 @@ export default {
         })
       })
     },
-    saveConfig(item) {
-      // 如果 fallback_extractor 是字符串，则将其解析回对象
-      if (typeof item.configObject.openpose.fallback_extractor === 'string') {
-        item.configObject.openpose.fallback_extractor = JSON.parse(item.configObject.openpose.fallback_extractor)
+    getComponentType(key, value) {
+      if (typeof value === 'boolean') {
+        return 'el-checkbox'
+      } else if (key === 'control_mode' || key === 'fallback_extractor' || key === 'extractor') {
+        return 'el-select'
+      } else {
+        return 'el-input'
       }
+    },
+    saveConfig() {
+      // 遍历所有的配置项
+      Object.keys(this.currentConfig).forEach(key => {
+        const value = this.currentConfig[key]
 
-      // 将整个 configObject 转换为字符串以便保存
-      item.config = JSON.stringify(item.configObject)
-      // ... 发送到服务器的代码 ...
-      this.dialogVisible = false // 关闭模态窗口
+        // 处理 JSON 字符串的反序列化
+        if (typeof value === 'string' && this.isJsonString(value)) {
+          this.currentConfig[key] = JSON.parse(value)
+        }
+
+        // 特殊字段的额外处理
+        // 例如，如果有其他字段需要类似的处理，可以在这里添加
+        if (key === 'fallback_extractor' || key === 'extractor') {
+          if (typeof value === 'string') {
+            this.currentConfig[key] = JSON.parse(value)
+          }
+        }
+
+        // 这里可以添加其他字段的特殊处理逻辑
+      })
+
+      // 将整个 currentConfig 转换为字符串以便保存
+      const configString = JSON.stringify(this.currentConfig)
+      // 调用接口保存配置
+      updateFilterStyle({
+        id: this.currentConfig.id,
+        name: this.currentConfig.name,
+        config: configString
+      })
+        .then((res) => {
+          if (res.status === 200) {
+            // 接口状态码为200，正常关闭模态窗口
+            this.$message.success('保存配置成功')
+            this.dialogVisible = false // 关闭模态框
+            location.reload() // 重新加载整个页面
+          } else {
+            // 接口状态码非200，弹出错误提示
+            this.$message.error('保存配置失败:' + res.statusText)
+            // 这里你可以根据需要显示错误信息给用户
+            location.reload() // 重新加载整个页面
+          }
+        })
+        .catch((error) => {
+          // 捕获其他可能的错误
+          this.dialogVisible = false
+          this.$message.error('保存配置时发生错误:' + error)
+          location.reload() // 重新加载整个页面
+        })
+    },
+    // 辅助函数，检查字符串是否为有效的 JSON
+    isJsonString(str) {
+      try {
+        JSON.parse(str)
+      } catch (e) {
+        return false
+      }
+      return true
     },
     formatTime(timestamp) {
       const date = new Date(timestamp)

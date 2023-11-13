@@ -79,6 +79,13 @@ export function getFilterStyle(data) {
   })
 }
 
+export function updateFilterStyle(data) {
+  return request({
+    url: '/admin/filterStyle',
+    method: 'post',
+    data: data
+  })
+}
 
 export function updateOrder(data) {
   return request({
@@ -87,7 +94,6 @@ export function updateOrder(data) {
     data: data
   })
 }
-
 
 export function exportData(data) {
   window.open(request.baseURL + '/admin/filter/export/' + data.id)
