@@ -36,10 +36,14 @@
         <el-checkbox v-model="form.adetailer"></el-checkbox>
       </el-form-item>
       <el-form-item label="勾线方法">
-        <my-select v-model="form.extractor" :options="feature_extractor" placeholder="选择勾线方法"></my-select>
+        <el-select v-model="form.extractor" placeholder="选择勾线方法">
+          <el-option v-for="(item, key) in feature_extractor" :label="item.module" :value="item.model" :key="key"/>
+        </el-select>
       </el-form-item>
       <el-form-item label="样式提取方法">
-        <my-select v-model="form.styler" :options="stylesEnum" placeholder="选择样式提取方法"></my-select>
+        <el-select v-model="form.style" placeholder="Styles">
+          <el-option v-for="item in stylesEnum" :label="item.name" :value="item.config" :key="item.name"/>
+        </el-select>
       </el-form-item>
       <el-form-item label="轮播方式">
         <el-select v-model="form.type" placeholder="选择类别">
