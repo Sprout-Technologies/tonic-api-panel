@@ -19,6 +19,17 @@
     </el-table>
     <el-dialog :visible="dialogVisible" title="Config Details" width="50%" @close="()=>this.dialogVisible=!this.dialogVisible">
       <el-form :model="currentConfig" label-width="120px">
+        <el-form-item label="Denoising Strength">
+          <el-input-number v-model="currentConfig.denoising_strength" :min="0" :max="1" step="0.1"></el-input-number>
+        </el-form-item>
+
+        <el-form-item label="CFG">
+          <el-input-number v-model="currentConfig.cfg" :min="0" :max="100" :step="1"></el-input-number>
+        </el-form-item>
+
+        <el-form-item label="Step">
+          <el-input-number v-model="currentConfig.step" :min="0" :max="100" :step="1"></el-input-number>
+        </el-form-item>
         <el-form-item v-for="(value, key) in currentConfig" :key="key" :label="key">
           <template v-if="key !== 'openpose'">
             <!-- 处理非 openpose 字段 -->
@@ -39,16 +50,16 @@
                 ></el-option>
               </el-select>
             </template>
-            <template v-else-if="key === 'extractor'">
-              <el-select v-model="currentConfig['extractor']">
+            <el-template v-else-if="key === 'extractor'">
+              <el-select v-model="currentConfig.extractor" :value-key="'model'">
                 <el-option
-                  v-for="(ext, extKey) in feature_extractor"
-                  :key="extKey"
-                  :label="extKey"
-                  :value="JSON.stringify(ext)"
+                  v-for="(extractor, key) in feature_extractor"
+                  :key="key"
+                  :label="key"
+                  :value="extractor"
                 ></el-option>
               </el-select>
-            </template>
+            </el-template>
             <template v-else-if="key === 'styler'">
               <el-select v-model="currentConfig['styler']">
                 <el-option
@@ -119,7 +130,11 @@ export default {
     return {
       stylesEnum: [],
       dialogVisible: false, // 新增用于控制模态窗口显示的属性
-      currentConfig: {}, // 新增当前配置对象，用于表单绑定
+      currentConfig: {
+        denoising_strength: 0.5, // 默认值
+        cfg: 50, // 默认值
+        step: 50 // 默认值
+      }, // 新增当前配置对象，用于表单绑定
       feature_extractor: {
         'lineart_realistic_prompt': { 'control_mode': 1, 'module': 'lineart_realistic', 'model': 'control_v11p_sd15_lineart [43d4be0d]' },
         'lineart_standard_prompt': { 'control_mode': 1, 'module': 'lineart_standard',
@@ -152,7 +167,7 @@ export default {
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
-        'dreamshaper': 'general\\dreamshaper_4BakedVae.safetensors [5d18b5b494]',
+        'dreamshaper': 'new\\dreamshaper_8.safetensors [879db523c3]',
         'revAnimated': 'general\\revAnimated_v122.safetensors [ea1a6218f7]',
         'deliberate': 'general\\deliberate_v2.safetensors [f0406fe1d4]',
         'rundiffusionFX': 'general\\rundiffusionFX_v10.safetensors [ad1a10552b]',
@@ -205,52 +220,57 @@ export default {
       }
     },
     saveConfig() {
-      // 遍历所有的配置项
-      Object.keys(this.currentConfig).forEach(key => {
-        const value = this.currentConfig[key]
+      // 创建一个新的配置对象，深度克隆当前配置
+      const configToSubmit = JSON.parse(JSON.stringify(this.currentConfig));
 
-        // 处理 JSON 字符串的反序列化
-        if (typeof value === 'string' && this.isJsonString(value)) {
-          this.currentConfig[key] = JSON.parse(value)
-        }
-
-        // 特殊字段的额外处理
-        // 例如，如果有其他字段需要类似的处理，可以在这里添加
-        if (key === 'fallback_extractor' || key === 'extractor') {
-          if (typeof value === 'string') {
-            this.currentConfig[key] = JSON.parse(value)
-          }
-        }
-
-        // 这里可以添加其他字段的特殊处理逻辑
+      // 遍历需要处理的字段
+      ['denoising_strength', 'cfg', 'step'].forEach(key => {
+        configToSubmit[key] = Number(configToSubmit[key])
       })
 
-      // 将整个 currentConfig 转换为字符串以便保存
-      const configString = JSON.stringify(this.currentConfig)
-      // 调用接口保存配置
+      // 处理特殊字段的额外处理逻辑
+      if (typeof configToSubmit['fallback_extractor'] === 'string') {
+        try {
+          configToSubmit['fallback_extractor'] = JSON.parse(configToSubmit['fallback_extractor'])
+        } catch (e) {
+          console.error('Error parsing fallback_extractor: ', e)
+          // 处理解析错误，可能需要提供反馈给用户
+        }
+      }
+      // 解析extractor字段为对象
+      if (typeof configToSubmit.extractor === 'string') {
+        try {
+          configToSubmit.extractor = JSON.parse(configToSubmit.extractor)
+        } catch (e) {
+          console.error('Error parsing extractor: ', e)
+          // 处理解析错误，可能需要提供反馈给用户
+        }
+      }
+      // 将整个 configToSubmit 转换为字符串以便保存
+      const configString = JSON.stringify(configToSubmit)
+      console.log(configString, 'configString')
+
       updateFilterStyle({
-        id: this.currentConfig.id,
-        name: this.currentConfig.name,
+        id: configToSubmit.id,
+        name: configToSubmit.name,
         config: configString
       })
         .then((res) => {
           if (res.status === 200) {
-            // 接口状态码为200，正常关闭模态窗口
+          // 接口状态码为200，正常关闭模态窗口
             this.$message.success('保存配置成功')
             this.dialogVisible = false // 关闭模态框
             location.reload() // 重新加载整个页面
           } else {
-            // 接口状态码非200，弹出错误提示
+          // 接口状态码非200，弹出错误提示
             this.$message.error('保存配置失败:' + res.statusText)
-            // 这里你可以根据需要显示错误信息给用户
-            location.reload() // 重新加载整个页面
+          // 这里你可以根据需要显示错误信息给用户
           }
         })
         .catch((error) => {
-          // 捕获其他可能的错误
+        // 捕获其他可能的错误
           this.dialogVisible = false
           this.$message.error('保存配置时发生错误:' + error)
-          location.reload() // 重新加载整个页面
         })
     },
     // 辅助函数，检查字符串是否为有效的 JSON
