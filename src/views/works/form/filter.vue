@@ -193,7 +193,7 @@ export default {
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
-        'dreamshaper': 'general\\dreamshaper_4BakedVae.safetensors [5d18b5b494]',
+        'dreamshaper': 'new\\dreamshaper_8.safetensors [879db523c3]',
         'revAnimated': 'general\\revAnimated_v122.safetensors [ea1a6218f7]',
         'deliberate': 'general\\deliberate_v2.safetensors [f0406fe1d4]',
         'rundiffusionFX': 'general\\rundiffusionFX_v10.safetensors [ad1a10552b]',
