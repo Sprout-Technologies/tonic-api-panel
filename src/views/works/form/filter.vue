@@ -42,7 +42,7 @@
       </el-form-item>
       <el-form-item label="样式提取方法">
         <el-select v-model="form.style" placeholder="Styles">
-          <el-option v-for="item in stylesEnum" :label="item.name" :value="item.config" :key="item.name"/>
+          <el-option v-for="(item, index) in stylesEnum" :label="item.name" :value="item.config" :key="`${item.name}-${index}`"/>
         </el-select>
       </el-form-item>
       <el-form-item label="轮播方式">
@@ -85,7 +85,7 @@
             <el-col :span="8" class="row-spacing">
               <el-form-item label="Styles">
                 <el-select v-model="duration.style" placeholder="Styles">
-                  <el-option v-for="item in stylesEnum" :label="item.name" :value="item.config" :key="item.name"/>
+                  <el-option v-for="(item,index) in stylesEnum" :label="item.name" :value="item.config" :key="item.name+index"/>
                 </el-select>
               </el-form-item>
             </el-col>
@@ -134,7 +134,7 @@
     <el-dialog v-if="showImportModal" title="导入测试滤镜" :visible.sync="showImportModal"   @close="handleDialogClose">
       <el-progress v-if="loading" type="line" :percentage="progressPercentage" :stroke-width="2" />
       <el-scrollbar style="height: 400px;" v-else>
-      <el-row v-for="(filter, index) in exampleData" :key="index" class="filter-item">
+      <el-row v-for="(filter, index) in exampleData" :key="filter" class="filter-item">
         <el-col :span="20">{{ filter.name }}</el-col>
         <el-col :span="4">
           <el-button size="mini" type="primary" @click="importFilter(filter)">导入</el-button>
@@ -309,8 +309,13 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
-      this.form.params = JSON.stringify(this.form)
-      updateOne(this.form).then(response => {
+      const submitData =
+        {
+          id: this.id || '',
+          params: JSON.stringify(this.form)
+        }
+      console.log(submitData)
+      updateOne(submitData).then(response => {
         if (response.success) {
           this.$message({
             message: '保存成功',
@@ -382,7 +387,6 @@ export default {
     importFilter(filter) {
       // 清空表单数据对象的 durations 数组
       this.form.durations = []
-      console.log(filter, 'filter')
       // 复制滤镜对象的属性
       filter.durations.forEach(duration => {
         // 计算 startSeconds 和 startFrames
@@ -409,8 +413,7 @@ export default {
             if (res['params']) {
               try {
                 const paramsObj = JSON.parse(res['params'])
-                this.form = { ...this.form, ...paramsObj }
-                this.selectedStyle = this.form.styler // 将form.styler赋值给selectedStyle
+                this.importFilter(paramsObj)
               } catch (e) {
                 console.error('解析 params 失败', e)
               }
