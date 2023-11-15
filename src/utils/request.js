@@ -5,10 +5,24 @@ import { getToken } from '@/utils/auth'
 import * as Qs from 'qs'
 import { Loading } from 'element-ui'
 ``
-const isProduction = localStorage.getItem('IS_PRD') === 'true'
+// 在这里可以根据不同的环境进行切换，基于当前的域名判断当前环境。如果是localhost则是本地环境，如果是beta.tonic.video则是测试环境，如果是app.tonic.video则是生产环境。
 
+// 基于当前域名判断环境
+const hostname = window.location.hostname
+let envBaseApi
+
+if (hostname === 'localhost') {
+  // 本地环境http://localhost:1240/api/v1/
+  envBaseApi = 'http://localhost:1240/api/v1/'
+} else if (hostname === 'beta.tonic.video') {
+  // 测试环境
+  envBaseApi = 'https://beta.tonic.video/api/v1'
+} else if (hostname === 'app.tonic.video') {
+  // 生产环境
+  envBaseApi = 'https://app.tonic.video/api/v1/'
+}
 const service = axios.create({
-  baseURL: process.env.BASE_API, // api的base_url
+  baseURL: envBaseApi, // api的base_url
   timeout: 60000, // 请求超时时间
   paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
 })
