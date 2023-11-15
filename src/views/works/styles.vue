@@ -14,6 +14,7 @@
       <el-table-column prop="config" label="Config">
         <template slot-scope="scope">
           <el-button type="text" @click="showDialog(scope.row)">详情</el-button>
+          <el-button type="text" @click="showDialog(scope.row,false)">以此为模板新增</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -60,6 +61,20 @@
                 ></el-option>
               </el-select>
             </el-template>
+            <el-form-item v-if="key === 'file'">
+              <el-upload
+                class="upload-demo"
+                :action="uploadAction"
+                :headers="uploadToken"
+                :on-success="(response, file) => handleFileUploadSuccess(response, file)"
+                :before-upload="beforeFileUpload"
+              >
+                <el-button size="small" type="primary">点击上传文件</el-button>
+                <div v-if="currentConfig.file">
+                  <img :src="currentConfig.file" alt="文件预览" class="image-preview">
+                </div>
+              </el-upload>
+            </el-form-item>
             <template v-else-if="key === 'styler'">
               <el-select v-model="currentConfig['styler']">
                 <el-option
@@ -124,13 +139,34 @@
 
 <script>
 import { getFilterStyle, updateFilterStyle } from '@/api/filter'
-
+import { getUploadFileURL, getUploadToken } from '@/api/upload'
 export default {
   data() {
     return {
       stylesEnum: [],
       dialogVisible: false, // 新增用于控制模态窗口显示的属性
+      uploadAction: getUploadFileURL(),
+      uploadToken: getUploadToken(),
       currentConfig: {
+        add_detail: -0.4, // 示例值
+        approach: 't2i', // 示例值
+        base_model: 'general/cetusMix_v4.safetensors [b42b09ff12]', // 示例值
+        brightness: 1.1, // 示例值
+        control_color: true, // 示例值
+        file: 'https://dkfyqdved0mrm.cloudfront.net/public/style_ref/golden/95da916f6c2548908bab3b2c4a35b5ea.png', // 示例值
+        id: 'feae86e7-1a2a-4748-be7b-1a57cd491d9e', // 示例值，新建时可能为空
+        name: 'test5', // 示例值
+        openpose: {
+          control_mode: 0, // 示例值
+          fallback_extractor: {
+            model: 'control_v11p_sd15_softedge [a8575a2a]',
+            module: 'softedge_hed'
+          }
+        },
+        styler: {
+          model: 't2iadapter_style_sd14v1 [202e85cc]',
+          module: 't2ia_style_clipvision'
+        },
         denoising_strength: 0.5, // 默认值
         cfg: 50, // 默认值
         step: 50 // 默认值
@@ -189,10 +225,11 @@ export default {
     this.fetchItems()
   },
   methods: {
-    showDialog(row) {
-      console.log(row, 'row')
+    showDialog(row, isEdit) {
       this.currentConfig = row.configObject // 设置当前配置对象
-      this.currentConfig.id = row.id
+      if (isEdit) {
+        this.currentConfig.id = row.id
+      }
       this.currentConfig.name = row.name
       this.dialogVisible = true // 显示模态窗口
       console.log(this.currentConfig, '123123')
@@ -218,6 +255,20 @@ export default {
       } else {
         return 'el-input'
       }
+    },
+    handleFileUploadSuccess(response, file) {
+      // 处理上传成功后的逻辑，这里假设响应中包含了文件的下载路径
+      this.currentConfig.file = response.fileDownloadPath
+    },
+
+    beforeFileUpload(file) {
+      // 这里可以添加上传前的检查逻辑，例如文件大小限制等
+      return true // 返回false则停止上传
+    },
+
+    clearFile() {
+      // 清除已上传的文件
+      this.currentConfig.file = null
     },
     saveConfig() {
       // 创建一个新的配置对象，深度克隆当前配置
@@ -300,5 +351,9 @@ export default {
   padding: 5px;
   background-color: #ebebeb;
   cursor: pointer;
+}
+.image-preview{
+  width: 200px;
+  height: 200px;
 }
 </style>

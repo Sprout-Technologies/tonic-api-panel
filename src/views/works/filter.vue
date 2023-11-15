@@ -252,7 +252,7 @@ export default {
           this.fetchData()
         })
       }).catch((r) => {
-        console.logr(r)
+        console.log(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
@@ -273,7 +273,7 @@ export default {
           })
         })
       }).catch((r) => {
-        console.logr(r)
+        console.log(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '通知失败'
@@ -295,7 +295,7 @@ export default {
           this.fetchData()
         })
       }).catch((r) => {
-        console.logr(r)
+        console.log(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
