@@ -36,13 +36,13 @@
         <el-checkbox v-model="form.adetailer"></el-checkbox>
       </el-form-item>
       <el-form-item label="勾线方法">
-        <el-select v-model="form.extractor" placeholder="选择勾线方法">
-          <el-option v-for="(item, key) in feature_extractor" :label="item.module" :value="item.model" :key="key"/>
+        <el-select v-model="form.extractorKey" placeholder="选择勾线方法">
+          <el-option v-for="(item, key) in feature_extractor" :label="key" :value="key" :key="key"/>
         </el-select>
       </el-form-item>
       <el-form-item label="样式提取方法">
-        <el-select v-model="form.style" placeholder="Styles">
-          <el-option v-for="(item, index) in stylesEnum" :label="item.name" :value="item.config" :key="`${item.name}-${index}`"/>
+        <el-select v-model="form.stylerKey" placeholder="Stylers">
+          <el-option v-for="(item, key, index) in stylers" :label="key" :value="key" :key="`${key}-${index}`"/>
         </el-select>
       </el-form-item>
       <el-form-item label="轮播方式">
@@ -178,6 +178,8 @@ export default {
       form: {
         name: '',
         denoising_strength: null,
+        stylerKey: '',
+        extractorKey: '',
         control_style: false,
         control_color: false,
         adetailer: false,
@@ -270,6 +272,15 @@ export default {
           'model': 'diff_control_sd15_temporalnet_fp16 [adc6bd97]',
           'weight': 0.7
         }
+      },
+      stylers: {
+        't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
+        'shuffle': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0, 'end': 1 },
+        'shuffle_weight15': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 0.15, 'start': 0.0,
+          'end': 1 },
+        'shuffle_mode2': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0,
+          'end': 1, 'control_mode': 2 }
+
       }
     }
   },
@@ -309,12 +320,41 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
+      // 在提交之前，根据选择的键转换 styler
+      if (this.form.stylerKey && this.stylers[this.form.stylerKey]) {
+        this.form.styler = this.stylers[this.form.stylerKey]
+      } else {
+        this.form.styler = null // 或者其他合适的默认值
+      }
+      if (this.form.styler && typeof this.form.styler === 'string') {
+        try {
+          this.form.styler = JSON.parse(this.form.styler)
+        } catch (e) {
+          console.error('解析 styler 字符串时出错:', e)
+          this.form.styler = {} // 解析失败时设置为一个空对象
+        }
+      }
+      if (this.form.extractorKey && this.feature_extractor[this.form.extractorKey]) {
+        this.form.extractor = this.feature_extractor[this.form.extractorKey]
+      } else {
+        this.form.extractor = null // 或者其他合适的默认值
+      }
+      // 检查并处理 durations 中的 styles 属性
+      this.form.durations.forEach(duration => {
+        if (duration.style && typeof duration.style === 'string') {
+          try {
+            duration.style = JSON.parse(duration.style)
+          } catch (e) {
+            console.error('解析 styles 字符串时出错:', e)
+            duration.style = {} // 解析失败时设置为一个空对象
+          }
+        }
+      })
       const submitData =
         {
           id: this.id || '',
           params: JSON.stringify(this.form)
         }
-      console.log(submitData)
       updateOne(submitData).then(response => {
         if (response.success) {
           this.$message({
