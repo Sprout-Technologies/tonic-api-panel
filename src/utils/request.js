@@ -4,19 +4,18 @@ import store from '../store'
 import { getToken } from '@/utils/auth'
 import * as Qs from 'qs'
 import { Loading } from 'element-ui'
+``
+const isProduction = localStorage.getItem('IS_PRD') === 'true'
 
-
-// 创建axios实例
 const service = axios.create({
   baseURL: process.env.BASE_API, // api的base_url
   timeout: 60000, // 请求超时时间
-  paramsSerializer: params => Qs.stringify(params, {arrayFormat: 'repeat'})
+  paramsSerializer: params => Qs.stringify(params, { arrayFormat: 'repeat' })
 })
 
 let globalLoading
 
-function startLoading () {
-
+function startLoading() {
   globalLoading = Loading.service({
 
     lock: true,
@@ -26,62 +25,48 @@ function startLoading () {
     background: 'rgba(0, 0, 0, 0.7)'
 
   })
-
 }
 
-function endLoading () {
-
+function endLoading() {
   setTimeout(() => {
-
     globalLoading.close()
-
   }, 2000)
-
 }
 
 let needLoadingRequestCount = 0
 
-export function showFullScreenLoading () {
-
+export function showFullScreenLoading() {
   if (needLoadingRequestCount === 0) {
-
     startLoading()
-
   }
 
   needLoadingRequestCount++
-
 }
 
-export function tryHideFullScreenLoading () {
-
+export function tryHideFullScreenLoading() {
   if (needLoadingRequestCount <= 0) return
 
   needLoadingRequestCount--
 
   if (needLoadingRequestCount === 0) {
-
     endLoading()
-
   }
-
 }
 
-
 service.baseURL = process.env.BASE_API
-service.token =  getToken()
+service.token = getToken()
 // request拦截器
 service.interceptors.request.use(config => {
-  try{
-    let token = getToken()
-    if(token) {
+  try {
+    const token = getToken()
+    if (token) {
       config.headers['X-Authorization'] = 'Bearer ' + token // 让每个请求携带自定义token 请根据实际情况自行修改
     }
-    if(!service.token){
+    if (!service.token) {
       service.token = token
     }
     showFullScreenLoading()
-  }catch(e) {
+  } catch (e) {
     tryHideFullScreenLoading()
     console.log(e)
   }
@@ -128,7 +113,7 @@ service.interceptors.response.use(
 
     console.log('err' + error)// for debug
     Message({
-      message: "error: [" + error.response.data.code + "] " + error.response.data.error,
+      message: 'error: [' + error.response.data.code + '] ' + error.response.data.error,
       type: 'error',
       duration: 5 * 1000
     })

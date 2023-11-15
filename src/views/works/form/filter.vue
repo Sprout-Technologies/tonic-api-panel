@@ -23,6 +23,34 @@
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
         </el-upload>
       </el-form-item>
+      <el-form-item label="图标">
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :before-upload="beforeAvatarUpload"
+          :action="uploadAction"
+          :headers="uploadToken"
+          :on-success="handleIconSuccess"
+        >
+          <img v-if="form.icon" :src="form.icon" class="avatar">
+          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+        </el-upload>
+      </el-form-item>
+      <el-form-item label="预览视频">
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :before-upload="beforeAvatarUpload"
+          :action="uploadAction"
+          :headers="uploadToken"
+          :on-success="handleVideoSuccess"
+        >
+          <video v-if="form.previewVideo" :src="form.previewVideo" controls class="video-preview"></video>
+          <i v-else class="el-icon-plus avatar-uploader-icon">
+            上传视频
+          </i>
+        </el-upload>
+      </el-form-item>
       <el-form-item label="去噪强度">
         <el-input-number size="mini" controls-position="right" :step="1" v-model="form.denoising_strength"></el-input-number>
       </el-form-item>
@@ -288,7 +316,16 @@ export default {
     handlePreviewCoverImageSuccess(res, file) {
       if (res.response) {
         this.form.preview_cover_image = res.response.fileDownloadPath
+      }
+    },
+    handleIconSuccess(res, file) {
+      if (res.response) {
         this.form.icon = res.response.fileDownloadPath
+      }
+    },
+    handleVideoSuccess(res, file) {
+      if (res.response) {
+        this.form.preview_video = res.response.fileDownloadPath
       }
     },
     beforeAvatarUpload(file) {
