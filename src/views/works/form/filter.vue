@@ -327,7 +327,7 @@ export default {
       this.$forceUpdate()
     },
     handleVideoSuccess(res, file) {
-      console.log(res,'res')
+      console.log(res, 'res')
       this.form.preview_video = res.fileDownloadPath
       this.$forceUpdate()
     },
@@ -469,7 +469,7 @@ export default {
 
       setTimeout(increaseProgress, 500) // 从0开始增加进度
     },
-    importFilter(filter) {
+    importFilter(filter, res) {
       // 清空表单数据对象的 durations 数组
       this.form.durations = []
       // 复制滤镜对象的属性
@@ -482,7 +482,10 @@ export default {
         duration.endSeconds = Math.floor(duration.end)
         duration.endFrames = Math.round((duration.end - duration.endSeconds) * 30)
       })
-      this.form = { ...filter }
+      const baseObj = { ...res }
+      delete baseObj['params']
+      this.form = { ...filter, ...baseObj }
+      this.$forceUpdate()
     },
     fetchStylesEnum() {
       getFilterStyle().then(res => {
@@ -497,9 +500,8 @@ export default {
             this.listLoading = false
             if (res['params']) {
               try {
-                console.log(res, 'res')
                 const paramsObj = JSON.parse(res['params'])
-                this.importFilter(paramsObj)
+                this.importFilter(paramsObj, res)
               } catch (e) {
                 console.error('解析 params 失败', e)
               }
