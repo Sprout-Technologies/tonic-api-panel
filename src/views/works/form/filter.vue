@@ -19,7 +19,7 @@
           :headers="uploadToken"
           :on-change="(a,b)=>handlePreviewCoverImageSuccess(a,b)"
         >
-          <img v-if="form.preview_cover_image" :src="form.preview_cover_image" class="avatar">
+          <img v-if="form.preview_cover_image" :src="form.preview_cover_image" class="avatar"/>
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
         </el-upload>
       </el-form-item>
@@ -219,7 +219,9 @@ export default {
         gender_prompt: '',
         temporalnet: null,
         durations: [],
-        preview_cover_image: ''
+        preview_cover_image: '',
+        icon: '',
+        preview_video: ''
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -316,17 +318,18 @@ export default {
     handlePreviewCoverImageSuccess(res, file) {
       if (res.response) {
         this.form.preview_cover_image = res.response.fileDownloadPath
+        this.$forceUpdate()
       }
     },
     handleIconSuccess(res, file) {
-      if (res.response) {
-        this.form.icon = res.response.fileDownloadPath
-      }
+      console.log(res, 'res123321')
+      this.form.icon = res.fileDownloadPath
+      this.$forceUpdate()
     },
     handleVideoSuccess(res, file) {
-      if (res.response) {
-        this.form.preview_video = res.response.fileDownloadPath
-      }
+      console.log(res,'res')
+      this.form.preview_video = res.fileDownloadPath
+      this.$forceUpdate()
     },
     beforeAvatarUpload(file) {
       const isJPG = file.type.indexOf('image') >= 0
@@ -390,8 +393,13 @@ export default {
       const submitData =
         {
           id: this.id || '',
+          icon: this.form.icon,
+          preview_cover_image: this.form.preview_cover_image,
+          preview_video: this.form.preview_video,
+          name: this.form.name,
           params: JSON.stringify(this.form)
         }
+      console.log(submitData, '123123')
       updateOne(submitData).then(response => {
         if (response.success) {
           this.$message({
@@ -489,6 +497,7 @@ export default {
             this.listLoading = false
             if (res['params']) {
               try {
+                console.log(res, 'res')
                 const paramsObj = JSON.parse(res['params'])
                 this.importFilter(paramsObj)
               } catch (e) {
