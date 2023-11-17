@@ -111,11 +111,14 @@
               </el-form-item>
             </el-col>
             <el-col :span="8" class="row-spacing">
-              <el-form-item label="Styles">
-                <el-select v-model="duration.style" placeholder="Styles">
-                  <el-option v-for="(item,index) in stylesEnum" :label="item.name" :value="item.config" :key="item.name+index"/>
-                </el-select>
-              </el-form-item>
+              <el-select v-model="duration.style" placeholder="Styles">
+                <el-option
+                  v-for="style in stylesEnum"
+                  :label="style.name"
+                  :value="style.stringValue"
+                  :key="style.id"
+                />
+              </el-select>
             </el-col>
             <el-col :span="4" class="row-spacing">
               <el-form-item label="Type">
@@ -359,46 +362,36 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
-      // 在提交之前，根据选择的键转换 styler
-      if (this.form.stylerKey && this.stylers[this.form.stylerKey]) {
-        this.form.styler = this.stylers[this.form.stylerKey]
+      // 从 this.form 创建 submitData 的副本
+      const submitData = JSON.parse(JSON.stringify(this.form))
+      // 将字符串转换回对象
+      // 处理 styler
+      if (submitData.stylerKey && this.stylers[submitData.stylerKey]) {
+        submitData.styler = this.stylers[submitData.stylerKey]
       } else {
-        this.form.styler = null // 或者其他合适的默认值
+        submitData.styler = null
       }
-      if (this.form.styler && typeof this.form.styler === 'string') {
-        try {
-          this.form.styler = JSON.parse(this.form.styler)
-        } catch (e) {
-          console.error('解析 styler 字符串时出错:', e)
-          this.form.styler = {} // 解析失败时设置为一个空对象
-        }
-      }
-      if (this.form.extractorKey && this.feature_extractor[this.form.extractorKey]) {
-        this.form.extractor = this.feature_extractor[this.form.extractorKey]
+
+      // 处理 extractor
+      if (submitData.extractorKey && this.feature_extractor[submitData.extractorKey]) {
+        submitData.extractor = this.feature_extractor[submitData.extractorKey]
       } else {
-        this.form.extractor = null // 或者其他合适的默认值
+        submitData.extractor = null
       }
-      // 检查并处理 durations 中的 styles 属性
-      this.form.durations.forEach(duration => {
-        if (duration.style && typeof duration.style === 'string') {
-          try {
-            duration.style = JSON.parse(duration.style)
-          } catch (e) {
-            console.error('解析 styles 字符串时出错:', e)
-            duration.style = {} // 解析失败时设置为一个空对象
-          }
-        }
-      })
-      const submitData =
-        {
-          id: this.id || '',
-          icon: this.form.icon,
-          preview_cover_image: this.form.preview_cover_image,
-          preview_video: this.form.preview_video,
-          name: this.form.name,
-          params: JSON.stringify(this.form)
-        }
-      updateFilter(submitData).then(response => {
+
+      // 创建最终提交数据对象
+      const finalData = {
+        id: submitData.id || '',
+        icon: submitData.icon,
+        preview_cover_image: submitData.preview_cover_image,
+        preview_video: submitData.preview_video,
+        name: submitData.name,
+        params: JSON.stringify(submitData)
+      }
+
+      console.log(JSON.stringify(finalData), '最终提交的数据')
+
+      updateFilter(finalData).then(response => {
         if (response.status === 200) {
           this.$message({
             message: '保存成功',
@@ -487,7 +480,11 @@ export default {
     },
     fetchStylesEnum() {
       getFilterStyle().then(res => {
-        this.stylesEnum = res.content
+        this.stylesEnum = res.content.map(style => ({
+          id: style.id,
+          name: style.name,
+          stringValue: style.config // 假设 id 是唯一标识符
+        }))
       })
     },
     fetchData(id) {
