@@ -3,14 +3,14 @@
     <el-table :data="stylesEnum" style="width: 100%">
       <el-table-column prop="id" label="ID"></el-table-column>
       <el-table-column prop="name" label="Name"></el-table-column>
-      <el-table-column prop="createdAt" label="Created At">
+      <el-table-column prop="createdAt" label="Update At">
         <template slot-scope="scope">
           <el-tooltip effect="dark" :content="formatTimestamp(scope.row.createdAt)">
             <span>{{ formatTime(scope.row.createdAt) }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column prop="revision" label="Revision"></el-table-column>
+      <el-table-column prop="revision" label="版本号"></el-table-column>
       <el-table-column prop="config" label="Config">
         <template slot-scope="scope">
           <el-button type="text" @click="showDialog(scope.row)">详情</el-button>
@@ -18,12 +18,14 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog :visible="dialogVisible" title="Config Details" width="50%" @close="()=>this.dialogVisible=!this.dialogVisible">
-      <el-form :model="currentConfig" label-width="120px">
+    <el-dialog :visible.sync="dialogVisible" title="Config Details" width="50%" @close="()=>this.dialogVisible=!this.dialogVisible" ref="styleDialog">
+      <el-form :model="currentConfig" label-width="120px">     <el-form-item label="revision" v-if="currentConfig.revision">
+        <el-input v-model="currentConfig.revision" :min="0" :max="1" step="0.1" disabled></el-input>
+      </el-form-item>
+
         <el-form-item label="Denoising Strength">
           <el-input-number v-model="currentConfig.denoising_strength" :min="0" :max="1" step="0.1"></el-input-number>
         </el-form-item>
-
         <el-form-item label="CFG">
           <el-input-number v-model="currentConfig.cfg" :min="0" :max="100" :step="1"></el-input-number>
         </el-form-item>
@@ -61,6 +63,7 @@
                 ></el-option>
               </el-select>
             </el-template>
+
             <el-form-item v-if="key === 'file'">
               <el-upload
                 class="upload-demo"
@@ -150,6 +153,7 @@ export default {
       currentConfig: {
         add_detail: -0.4, // 示例值
         approach: 't2i', // 示例值
+        revision: 0,
         base_model: 'general/cetusMix_v4.safetensors [b42b09ff12]', // 示例值
         brightness: 1.1, // 示例值
         control_color: true, // 示例值
@@ -231,8 +235,8 @@ export default {
         this.currentConfig.id = row.id
       }
       this.currentConfig.name = row.name
-      this.dialogVisible = true // 显示模态窗口
-      console.log(this.currentConfig, '123123')
+      this.currentConfig.revision = row.revision
+      this.dialogVisible = !this.dialogVisible // 显示模态窗口
     },
     fetchStylesEnum() {
       return getFilterStyle().then(res => {
@@ -299,24 +303,25 @@ export default {
       }
       // 将整个 configToSubmit 转换为字符串以便保存
       const configString = JSON.stringify(configToSubmit)
-      console.log(configString, 'configString')
-
+      console.log(this.$refs.styleDialog, '123')
       updateFilterStyle({
         id: configToSubmit.id,
         name: configToSubmit.name,
-        config: configString
+        config: configString,
+        revision: configToSubmit.revision
       })
         .then((res) => {
           if (res.status === 200) {
-          // 接口状态码为200，正常关闭模态窗口
+            // 接口状态码为200，正常关闭模态窗口
             this.$message.success('保存配置成功')
-            this.dialogVisible = false // 关闭模态框
-            location.reload() // 重新加载整个页面
           } else {
-          // 接口状态码非200，弹出错误提示
+            // 接口状态码非200，弹出错误提示
             this.$message.error('保存配置失败:' + res.statusText)
           // 这里你可以根据需要显示错误信息给用户
           }
+          setTimeout(() => {
+            location.reload()
+          }, 1000)
         })
         .catch((error) => {
         // 捕获其他可能的错误

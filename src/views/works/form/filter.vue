@@ -175,7 +175,7 @@
 
 
 <script>
-import { getById, updateOne, getFilterStyle } from '@/api/filter'
+import { getById, updateFilter, getFilterStyle } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
 import axios from 'axios'
 import MySelect from './MySelect.vue'
@@ -322,7 +322,6 @@ export default {
       }
     },
     handleIconSuccess(res, file) {
-      console.log(res, 'res123321')
       this.form.icon = res.fileDownloadPath
       this.$forceUpdate()
     },
@@ -399,9 +398,8 @@ export default {
           name: this.form.name,
           params: JSON.stringify(this.form)
         }
-      console.log(submitData, '123123')
-      updateOne(submitData).then(response => {
-        if (response.success) {
+      updateFilter(submitData).then(response => {
+        if (response.status === 200) {
           this.$message({
             message: '保存成功',
             type: 'success'
