@@ -18,7 +18,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog :visible.sync="dialogVisible" title="Config Details" width="50%" @close="()=>this.dialogVisible=!this.dialogVisible" ref="styleDialog">
+    <el-dialog :visible.sync="dialogVisible" title="Config Details" width="50%" @close="()=>this.$refs.styleDialog.doClose()" ref="styleDialog">
       <el-form :model="currentConfig" label-width="120px">     <el-form-item label="revision" v-if="currentConfig.revision">
         <el-input v-model="currentConfig.revision" :min="0" :max="1" step="0.1" disabled></el-input>
       </el-form-item>
@@ -284,16 +284,17 @@ export default {
       })
 
       // 处理特殊字段的额外处理逻辑
-      if (typeof configToSubmit['fallback_extractor'] === 'string') {
+      if (this.isJsonString(configToSubmit.fallback_extractor)) {
         try {
-          configToSubmit['fallback_extractor'] = JSON.parse(configToSubmit['fallback_extractor'])
+          configToSubmit.fallback_extractor = JSON.parse(configToSubmit.fallback_extractor)
         } catch (e) {
           console.error('Error parsing fallback_extractor: ', e)
           // 处理解析错误，可能需要提供反馈给用户
         }
       }
+
       // 解析extractor字段为对象
-      if (typeof configToSubmit.extractor === 'string') {
+      if (this.isJsonString(configToSubmit.extractor)) {
         try {
           configToSubmit.extractor = JSON.parse(configToSubmit.extractor)
         } catch (e) {
@@ -301,9 +302,17 @@ export default {
           // 处理解析错误，可能需要提供反馈给用户
         }
       }
+      if (configToSubmit.openpose && this.isJsonString(configToSubmit.openpose.fallback_extractor)) {
+        try {
+          configToSubmit.openpose.fallback_extractor = JSON.parse(configToSubmit.openpose.fallback_extractor)
+        } catch (e) {
+          console.error('Error parsing openpose fallback_extractor: ', e)
+          // 处理解析错误，可能需要提供反馈给用户
+        }
+      }
       // 将整个 configToSubmit 转换为字符串以便保存
       const configString = JSON.stringify(configToSubmit)
-      console.log(this.$refs.styleDialog, '123')
+      console.log(configString, '123')
       updateFilterStyle({
         id: configToSubmit.id,
         name: configToSubmit.name,

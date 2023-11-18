@@ -1,14 +1,8 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="form" label-width="120px">
-      <el-form-item label="导入测试滤镜">
-        <el-button type="primary" @click="handleImportTemplate()" plain>
-          <i class="el-icon-files"></i>
-          <span>导入测试滤镜（Template)</span>
-        </el-button>
-      </el-form-item>
       <el-form-item label="滤镜名">
-        <el-input v-model="form.name"></el-input>
+        <el-input v-model="form.name"/>
       </el-form-item>
       <el-form-item label="预览图">
         <el-upload
@@ -19,7 +13,7 @@
           :headers="uploadToken"
           :on-change="(a,b)=>handlePreviewCoverImageSuccess(a,b)"
         >
-          <img v-if="form.preview_cover_image" :src="form.preview_cover_image" class="avatar"/>
+          <img v-if="form.previewCoverImage" :src="form.previewCoverImage" class="avatar"/>
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
         </el-upload>
       </el-form-item>
@@ -40,7 +34,6 @@
         <el-upload
           class="avatar-uploader"
           :show-file-list="false"
-          :before-upload="beforeAvatarUpload"
           :action="uploadAction"
           :headers="uploadToken"
           :on-success="handleVideoSuccess"
@@ -110,16 +103,22 @@
                 <el-input-number v-model="duration.endFrames"></el-input-number>
               </el-form-item>
             </el-col>
-            <el-col :span="8" class="row-spacing">
-              <el-select v-model="duration.style" placeholder="Styles">
-                <el-option
-                  v-for="style in stylesEnum"
-                  :label="style.name"
-                  :value="style.stringValue"
-                  :key="style.id"
-                />
-              </el-select>
-            </el-col>
+            <el-form-item label="Styles">
+              <el-col :span="8" class="row-spacing">
+                <el-select
+                  v-model="duration.style"
+                  filterable
+                  placeholder="Styles"
+                >
+                  <el-option
+                    v-for="(style, index) in stylesEnum"
+                    :label="style.name + '--'+ index"
+                    :value="style.stringValue"
+                    :key="style.id"
+                  />
+                </el-select>
+              </el-col>
+              </el-form-item>
             <el-col :span="4" class="row-spacing">
               <el-form-item label="Type">
                 <el-select v-model="duration.type" placeholder="Type">
@@ -187,13 +186,12 @@ export default {
   components: {
     MySelect
   },
-  created() {
+  async created() {
     this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
-    this.fetchData(this.id)
-    this.fetchStylesEnum()
     if (this.id) {
       this.form.id = this.id
     }
+    await this.fetchStylesEnum()
   },
 
   data() {
@@ -221,10 +219,7 @@ export default {
         trigger_prompt: '',
         gender_prompt: '',
         temporalnet: null,
-        durations: [],
-        preview_cover_image: '',
-        icon: '',
-        preview_video: ''
+        durations: []
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -320,7 +315,7 @@ export default {
   methods: {
     handlePreviewCoverImageSuccess(res, file) {
       if (res.response) {
-        this.form.preview_cover_image = res.response.fileDownloadPath
+        this.form.previewCoverImage = res.response.fileDownloadPath
         this.$forceUpdate()
       }
     },
@@ -330,7 +325,7 @@ export default {
     },
     handleVideoSuccess(res, file) {
       console.log(res, 'res')
-      this.form.preview_video = res.fileDownloadPath
+      this.form.previewVideo = res.fileDownloadPath
       this.$forceUpdate()
     },
     beforeAvatarUpload(file) {
@@ -348,7 +343,7 @@ export default {
         startFrames: 0,
         endSeconds: 0,
         endFrames: 0,
-        style: [],
+        styler: [],
         type: null,
         interpolation: false,
         frame_per_style: 0,
@@ -378,19 +373,30 @@ export default {
       } else {
         submitData.extractor = null
       }
-
+      // 确保 durations 中的 style 字段是单个对象
+      if (submitData.durations) {
+        submitData.durations.forEach(duration => {
+          if (Array.isArray(duration.style) && duration.style.length > 0) {
+            // 取数组的第一个元素作为 style 对象
+            duration.style = duration.style[0]
+          }
+          if (typeof duration.style === 'string') {
+            duration.style = JSON.parse(duration.style)
+          }
+        })
+      }
+      console.log(submitData.durations[0].style, '第一项')
+      /*    console.log(this.stylesEnum[54].stringValue, 'this.stylesEnum[40]')*/
       // 创建最终提交数据对象
       const finalData = {
-        id: submitData.id || '',
+        id: submitData.id || this.id || null,
         icon: submitData.icon,
-        preview_cover_image: submitData.preview_cover_image,
-        preview_video: submitData.preview_video,
+        previewCoverImage: submitData.previewCoverImage,
+        previewVideo: submitData.previewVideo,
         name: submitData.name,
         params: JSON.stringify(submitData)
       }
-
-      console.log(JSON.stringify(finalData), '最终提交的数据')
-
+      console.log(JSON.parse(finalData.params).durations[0], 'finalData')
       updateFilter(finalData).then(response => {
         if (response.status === 200) {
           this.$message({
@@ -461,10 +467,11 @@ export default {
       setTimeout(increaseProgress, 500) // 从0开始增加进度
     },
     importFilter(filter, res) {
-      // 清空表单数据对象的 durations 数组
-      this.form.durations = []
-      // 复制滤镜对象的属性
-      filter.durations.forEach(duration => {
+      // 使用 JSON 方法进行深拷贝
+      const deepCopiedFilter = JSON.parse(JSON.stringify(filter))
+
+      // 处理 deepCopiedFilter 的属性
+      deepCopiedFilter.durations.forEach(duration => {
         // 计算 startSeconds 和 startFrames
         duration.startSeconds = Math.floor(duration.start)
         duration.startFrames = Math.round((duration.start - duration.startSeconds) * 30)
@@ -472,19 +479,23 @@ export default {
         // 计算 endSeconds 和 endFrames
         duration.endSeconds = Math.floor(duration.end)
         duration.endFrames = Math.round((duration.end - duration.endSeconds) * 30)
+        if (duration.style) {
+          duration.style = JSON.stringify(...duration.style)
+        }
       })
-      const baseObj = { ...res }
-      delete baseObj['params']
-      this.form = { ...filter, ...baseObj }
+      // 更新 form 数据
+      this.form = { previewCoverImage: res.preview_cover_image, previewVide: res.preview_video, ...res, ...deepCopiedFilter }
+      console.log(this.form, 'this.form')
       this.$forceUpdate()
     },
-    fetchStylesEnum() {
+    async fetchStylesEnum() {
       getFilterStyle().then(res => {
         this.stylesEnum = res.content.map(style => ({
           id: style.id,
           name: style.name,
           stringValue: style.config // 假设 id 是唯一标识符
         }))
+        this.fetchData(this.id)
       })
     },
     fetchData(id) {

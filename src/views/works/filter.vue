@@ -64,6 +64,10 @@
           prop="name"
           label="名称">
         </el-table-column>
+        <el-table-column
+          prop="id"
+          label="id">
+        </el-table-column>
         <el-table-column label="更新时间">
           <template slot-scope="scope">
             {{scope.row.updatedAt | moment('YYYY-MM-DD hh:mm:ss')}}
