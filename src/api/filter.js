@@ -17,7 +17,7 @@ export function getById(id) {
 
 export function updateFilter(data) {
   return request({
-    url: '/admin/filter/',
+    url: '/admin/filter/update',
     method: 'post',
     data: data
   })

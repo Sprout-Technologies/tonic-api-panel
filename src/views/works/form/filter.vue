@@ -571,6 +571,7 @@ export default {
         previewCoverImage: res.previewCoverImage,
         previewVideo: res.previewVideo,
         name: res.name,
+        visibilityStatus: res.visibilityStatus,
         // 已有的属性
         ...deepCopiedFilter
       }
