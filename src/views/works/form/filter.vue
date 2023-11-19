@@ -1,14 +1,34 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="form" label-width="120px">
-      <el-form-item label="导入测试滤镜">
-        <el-button type="primary" @click="handleImportTemplate()" plain>
-          <i class="el-icon-files"></i>
-          <span>导入测试滤镜（Template)</span>
-        </el-button>
+      <el-form-item label="上线状态">
+        <el-select v-model="form.visibilityStatus" placeholder="上线状态">
+          <el-option v-for="(item, key) in visibilityStatusEnum" :key="key" :label="item.label" :value="item.value"/>
+        </el-select>
       </el-form-item>
       <el-form-item label="滤镜名">
-        <el-input v-model="form.name"></el-input>
+        <el-input v-model="form.songName"/>
+      </el-form-item>
+      <el-form-item label="艺术家名">
+        <el-input v-model="form.artistName"/>
+      </el-form-item>
+      <el-form-item label="展示名称">
+        <el-input v-model="form.name" disabled/>
+      </el-form-item>
+      <el-form-item label="时长">
+        <el-input-number v-model="form.duration"/>
+      </el-form-item>
+      <el-form-item label="是否新滤镜">
+        <el-checkbox v-model="form.newFilter"/>
+      </el-form-item>
+      <el-form-item label="popular">
+        <el-checkbox v-model="form.popular"/>
+      </el-form-item>
+      <el-form-item label="trendingTiktok">
+        <el-checkbox v-model="form.trendingTiktok"/>
+      </el-form-item>
+      <el-form-item label="trendingInstagram">
+        <el-checkbox v-model="form.trendingInstagram"/>
       </el-form-item>
       <el-form-item label="预览图">
         <el-upload
@@ -19,8 +39,35 @@
           :headers="uploadToken"
           :on-change="(a,b)=>handlePreviewCoverImageSuccess(a,b)"
         >
-          <img v-if="form.preview_cover_image" :src="form.preview_cover_image" class="avatar">
+          <img v-if="form.previewCoverImage" :src="form.previewCoverImage" class="avatar"/>
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+        </el-upload>
+      </el-form-item>
+      <el-form-item label="图标">
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :before-upload="beforeAvatarUpload"
+          :action="uploadAction"
+          :headers="uploadToken"
+          :on-success="handleIconSuccess"
+        >
+          <img v-if="form.icon" :src="form.icon" class="avatar">
+          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+        </el-upload>
+      </el-form-item>
+      <el-form-item label="预览视频">
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :action="uploadAction"
+          :headers="uploadToken"
+          :on-success="handleVideoSuccess"
+        >
+          <video v-if="form.previewVideo" :src="form.previewVideo" controls class="video-preview"></video>
+          <i v-else class="el-icon-plus avatar-uploader-icon">
+            上传视频
+          </i>
         </el-upload>
       </el-form-item>
       <el-form-item label="去噪强度">
@@ -36,13 +83,13 @@
         <el-checkbox v-model="form.adetailer"></el-checkbox>
       </el-form-item>
       <el-form-item label="勾线方法">
-        <el-select v-model="form.extractor" placeholder="选择勾线方法">
-          <el-option v-for="(item, key) in feature_extractor" :label="item.module" :value="item.model" :key="key"/>
+        <el-select v-model="form.extractorKey" placeholder="选择勾线方法">
+          <el-option v-for="(item, key) in feature_extractor" :label="key" :value="key" :key="key"/>
         </el-select>
       </el-form-item>
       <el-form-item label="样式提取方法">
-        <el-select v-model="form.style" placeholder="Styles">
-          <el-option v-for="(item, index) in stylesEnum" :label="item.name" :value="item.config" :key="`${item.name}-${index}`"/>
+        <el-select v-model="form.stylerKey" placeholder="Stylers">
+          <el-option v-for="(item, key, index) in stylers" :label="key" :value="key" :key="`${key}-${index}`"/>
         </el-select>
       </el-form-item>
       <el-form-item label="轮播方式">
@@ -82,13 +129,22 @@
                 <el-input-number v-model="duration.endFrames"></el-input-number>
               </el-form-item>
             </el-col>
-            <el-col :span="8" class="row-spacing">
-              <el-form-item label="Styles">
-                <el-select v-model="duration.style" placeholder="Styles">
-                  <el-option v-for="(item,index) in stylesEnum" :label="item.name" :value="item.config" :key="item.name+index"/>
+            <el-form-item label="Styles">
+              <el-col :span="8" class="row-spacing">
+                <el-select
+                  v-model="duration.style"
+                  filterable
+                  placeholder="Styles"
+                >
+                  <el-option
+                    v-for="(style, index) in stylesEnum"
+                    :label="style.name + '--'+ index"
+                    :value="style.stringValue"
+                    :key="style.id"
+                  />
                 </el-select>
+              </el-col>
               </el-form-item>
-            </el-col>
             <el-col :span="4" class="row-spacing">
               <el-form-item label="Type">
                 <el-select v-model="duration.type" placeholder="Type">
@@ -147,7 +203,7 @@
 
 
 <script>
-import { getById, updateOne, getFilterStyle } from '@/api/filter'
+import { getById, getFilterStyle, updateFilter } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
 import axios from 'axios'
 import MySelect from './MySelect.vue'
@@ -156,13 +212,12 @@ export default {
   components: {
     MySelect
   },
-  created() {
+  async created() {
     this.id = this.$route.params.id === 'create' ? null : this.$route.params.id
-    this.fetchData(this.id)
-    this.fetchStylesEnum()
     if (this.id) {
       this.form.id = this.id
     }
+    await this.fetchStylesEnum()
   },
 
   data() {
@@ -178,6 +233,8 @@ export default {
       form: {
         name: '',
         denoising_strength: null,
+        stylerKey: '',
+        extractorKey: '',
         control_style: false,
         control_color: false,
         adetailer: false,
@@ -188,8 +245,7 @@ export default {
         trigger_prompt: '',
         gender_prompt: '',
         temporalnet: null,
-        durations: [],
-        preview_cover_image: ''
+        durations: []
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -270,15 +326,37 @@ export default {
           'model': 'diff_control_sd15_temporalnet_fp16 [adc6bd97]',
           'weight': 0.7
         }
-      }
+      },
+      stylers: {
+        't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
+        'shuffle': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0, 'end': 1 },
+        'shuffle_weight15': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 0.15, 'start': 0.0,
+          'end': 1 },
+        'shuffle_mode2': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0,
+          'end': 1, 'control_mode': 2 }
+
+      },
+      visibilityStatusEnum: [
+        { value: 0, label: '隐藏' },
+        { value: 1, label: '上线' },
+        { value: 2, label: '测试' }
+      ]
     }
   },
   methods: {
     handlePreviewCoverImageSuccess(res, file) {
       if (res.response) {
-        this.form.preview_cover_image = res.response.fileDownloadPath
-        this.form.icon = res.response.fileDownloadPath
+        this.form.previewCoverImage = res.response.fileDownloadPath
+        this.$forceUpdate()
       }
+    },
+    handleIconSuccess(res, file) {
+      this.form.icon = res.fileDownloadPath
+      this.$forceUpdate()
+    },
+    handleVideoSuccess(res, file) {
+      this.form.previewVideo = res.fileDownloadPath
+      this.$forceUpdate()
     },
     beforeAvatarUpload(file) {
       const isJPG = file.type.indexOf('image') >= 0
@@ -295,7 +373,7 @@ export default {
         startFrames: 0,
         endSeconds: 0,
         endFrames: 0,
-        style: [],
+        styler: [],
         type: null,
         interpolation: false,
         frame_per_style: 0,
@@ -309,14 +387,65 @@ export default {
       this.form.durations.splice(index, 1)
     },
     saveData() {
-      const submitData =
-        {
-          id: this.id || '',
-          params: JSON.stringify(this.form)
-        }
-      console.log(submitData)
-      updateOne(submitData).then(response => {
-        if (response.success) {
+      // 从 this.form 创建 submitData 的副本
+      const submitData = JSON.parse(JSON.stringify(this.form))
+      delete submitData.params
+      // 将字符串转换回对象
+      // 处理 styler
+      if (submitData.stylerKey && this.stylers[submitData.stylerKey]) {
+        submitData.styler = this.stylers[submitData.stylerKey]
+      }
+
+      // 处理 extractor
+      if (submitData.extractorKey && this.feature_extractor[submitData.extractorKey]) {
+        submitData.extractor = this.feature_extractor[submitData.extractorKey]
+      }
+      if (submitData.durations) {
+        submitData.durations.forEach(duration => {
+          const tempObj = JSON.parse(duration.style)
+          duration.style = [tempObj]
+        })
+      }
+      // 创建最终提交数据对象
+      const finalData = {
+        id: submitData.id || this.id,
+        icon: submitData.icon,
+        previewCoverImage: submitData.previewCoverImage,
+        previewVideo: submitData.previewVideo,
+        songName: submitData.songName,
+        artistName: submitData.artistName,
+        name: submitData.name,
+        duration: submitData.duration,
+        newFilter: submitData.newFilter,
+        popular: submitData.popular,
+        trendingTiktok: submitData.trendingTiktok,
+        trendingInstagram: submitData.trendingInstagram,
+        visibilityStatus: submitData.visibilityStatus,
+        revision: submitData.revision,
+        updatedAt: submitData.updatedAt,
+        weight: submitData.weight,
+
+        // 可能还有其他需要添加的字段...
+        params: JSON.stringify(submitData)
+      }
+      delete submitData.id
+      delete submitData.icon
+      delete submitData.previewCoverImage
+      delete submitData.previewVideo
+      delete submitData.name
+      delete submitData.duration
+      delete submitData.newFilter
+      delete submitData.popular
+      delete submitData.trendingTiktok
+      delete submitData.trendingInstagram
+      delete submitData.visibilityStatus
+      delete submitData.revision
+      delete submitData.updatedAt
+      delete submitData.weight
+
+      finalData.params = JSON.stringify(submitData)
+      updateFilter(finalData).then(response => {
+        if (response.status === 200) {
           this.$message({
             message: '保存成功',
             type: 'success'
@@ -384,11 +513,12 @@ export default {
 
       setTimeout(increaseProgress, 500) // 从0开始增加进度
     },
-    importFilter(filter) {
-      // 清空表单数据对象的 durations 数组
-      this.form.durations = []
-      // 复制滤镜对象的属性
-      filter.durations.forEach(duration => {
+    importFilter(filter, res) {
+      // 使用 JSON 方法进行深拷贝
+      const deepCopiedFilter = JSON.parse(JSON.stringify(filter))
+
+      // 处理 deepCopiedFilter 的属性
+      deepCopiedFilter.durations.forEach(duration => {
         // 计算 startSeconds 和 startFrames
         duration.startSeconds = Math.floor(duration.start)
         duration.startFrames = Math.round((duration.start - duration.startSeconds) * 30)
@@ -396,12 +526,46 @@ export default {
         // 计算 endSeconds 和 endFrames
         duration.endSeconds = Math.floor(duration.end)
         duration.endFrames = Math.round((duration.end - duration.endSeconds) * 30)
+        if (duration.style) {
+          duration.style = JSON.stringify(...duration.style)
+        }
       })
-      this.form = { ...filter }
+
+      // 更新 form 数据
+      this.form = {
+        // 新增或修改的属性
+        artistName: res.artistName,
+        songName: res.songName,
+        newFilter: res.newFilter,
+        trendingInstagram: res.trendingInstagram,
+        trendingTiktok: res.trendingTiktok,
+        popular: res.popular,
+        revision: res.revision,
+        weight: res.weight,
+        duration: res.duration,
+        createdAt: res.createdAt,
+        updatedAt: res.updatedAt,
+        id: res.id,
+        icon: res.icon,
+        previewCoverImage: res.previewCoverImage,
+        previewVideo: res.previewVideo,
+        name: res.name,
+
+        // 已有的属性
+        ...deepCopiedFilter
+      }
+
+      console.log(this.form, 'this.form')
+      this.$forceUpdate()
     },
-    fetchStylesEnum() {
+    async fetchStylesEnum() {
       getFilterStyle().then(res => {
-        this.stylesEnum = res.content
+        this.stylesEnum = res.content.map(style => ({
+          id: style.id,
+          name: style.name,
+          stringValue: style.config // 假设 id 是唯一标识符
+        }))
+        this.fetchData(this.id)
       })
     },
     fetchData(id) {
@@ -413,7 +577,7 @@ export default {
             if (res['params']) {
               try {
                 const paramsObj = JSON.parse(res['params'])
-                this.importFilter(paramsObj)
+                this.importFilter(paramsObj, res)
               } catch (e) {
                 console.error('解析 params 失败', e)
               }

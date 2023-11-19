@@ -64,6 +64,10 @@
           prop="name"
           label="名称">
         </el-table-column>
+        <el-table-column
+          prop="id"
+          label="id">
+        </el-table-column>
         <el-table-column label="更新时间">
           <template slot-scope="scope">
             {{scope.row.updatedAt | moment('YYYY-MM-DD hh:mm:ss')}}
@@ -252,7 +256,7 @@ export default {
           this.fetchData()
         })
       }).catch((r) => {
-        console.logr(r)
+        console.log(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'
@@ -273,7 +277,7 @@ export default {
           })
         })
       }).catch((r) => {
-        console.logr(r)
+        console.log(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '通知失败'
@@ -295,7 +299,7 @@ export default {
           this.fetchData()
         })
       }).catch((r) => {
-        console.logr(r)
+        console.log(r)
         this.$message({
           type: r ? 'error' : 'info',
           message: '发布失败'

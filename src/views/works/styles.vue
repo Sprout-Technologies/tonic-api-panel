@@ -3,26 +3,29 @@
     <el-table :data="stylesEnum" style="width: 100%">
       <el-table-column prop="id" label="ID"></el-table-column>
       <el-table-column prop="name" label="Name"></el-table-column>
-      <el-table-column prop="createdAt" label="Created At">
+      <el-table-column prop="createdAt" label="Update At">
         <template slot-scope="scope">
           <el-tooltip effect="dark" :content="formatTimestamp(scope.row.createdAt)">
             <span>{{ formatTime(scope.row.createdAt) }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column prop="revision" label="Revision"></el-table-column>
+      <el-table-column prop="revision" label="版本号"></el-table-column>
       <el-table-column prop="config" label="Config">
         <template slot-scope="scope">
           <el-button type="text" @click="showDialog(scope.row)">详情</el-button>
+          <el-button type="text" @click="showDialog(scope.row,false)">以此为模板新增</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog :visible="dialogVisible" title="Config Details" width="50%" @close="()=>this.dialogVisible=!this.dialogVisible">
-      <el-form :model="currentConfig" label-width="120px">
+    <el-dialog :visible.sync="dialogVisible" title="Config Details" width="50%" @close="()=>this.$refs.styleDialog.doClose()" ref="styleDialog">
+      <el-form :model="currentConfig" label-width="120px">     <el-form-item label="revision" v-if="currentConfig.revision">
+        <el-input v-model="currentConfig.revision" :min="0" :max="1" step="0.1" disabled></el-input>
+      </el-form-item>
+
         <el-form-item label="Denoising Strength">
           <el-input-number v-model="currentConfig.denoising_strength" :min="0" :max="1" step="0.1"></el-input-number>
         </el-form-item>
-
         <el-form-item label="CFG">
           <el-input-number v-model="currentConfig.cfg" :min="0" :max="100" :step="1"></el-input-number>
         </el-form-item>
@@ -60,6 +63,21 @@
                 ></el-option>
               </el-select>
             </el-template>
+
+            <el-form-item v-if="key === 'file'">
+              <el-upload
+                class="upload-demo"
+                :action="uploadAction"
+                :headers="uploadToken"
+                :on-success="(response, file) => handleFileUploadSuccess(response, file)"
+                :before-upload="beforeFileUpload"
+              >
+                <el-button size="small" type="primary">点击上传文件</el-button>
+                <div v-if="currentConfig.file">
+                  <img :src="currentConfig.file" alt="文件预览" class="image-preview">
+                </div>
+              </el-upload>
+            </el-form-item>
             <template v-else-if="key === 'styler'">
               <el-select v-model="currentConfig['styler']">
                 <el-option
@@ -104,10 +122,10 @@
               <el-form-item label="Fallback Extractor">
                 <el-select v-model="currentConfig.openpose.fallback_extractor">
                   <el-option
-                    v-for="(extractor, key) in feature_extractor"
-                    :key="key"
-                    :label="key"
-                    :value="JSON.stringify(extractor)"
+                    v-for="(extractor, extractorKey) in feature_extractor"
+                    :key="extractorKey"
+                    :label="extractor.model"
+                    :value="extractor.model"
                   ></el-option>
                 </el-select>
               </el-form-item>
@@ -124,13 +142,35 @@
 
 <script>
 import { getFilterStyle, updateFilterStyle } from '@/api/filter'
-
+import { getUploadFileURL, getUploadToken } from '@/api/upload'
 export default {
   data() {
     return {
       stylesEnum: [],
       dialogVisible: false, // 新增用于控制模态窗口显示的属性
+      uploadAction: getUploadFileURL(),
+      uploadToken: getUploadToken(),
       currentConfig: {
+        add_detail: -0.4, // 示例值
+        approach: 't2i', // 示例值
+        revision: 0,
+        base_model: 'general/cetusMix_v4.safetensors [b42b09ff12]', // 示例值
+        brightness: 1.1, // 示例值
+        control_color: true, // 示例值
+        file: 'https://dkfyqdved0mrm.cloudfront.net/public/style_ref/golden/95da916f6c2548908bab3b2c4a35b5ea.png', // 示例值
+        id: 'feae86e7-1a2a-4748-be7b-1a57cd491d9e', // 示例值，新建时可能为空
+        name: 'test5', // 示例值
+        openpose: {
+          control_mode: 0, // 示例值
+          fallback_extractor: {
+            model: 'control_v11p_sd15_softedge [a8575a2a]',
+            module: 'softedge_hed'
+          }
+        },
+        styler: {
+          model: 't2iadapter_style_sd14v1 [202e85cc]',
+          module: 't2ia_style_clipvision'
+        },
         denoising_strength: 0.5, // 默认值
         cfg: 50, // 默认值
         step: 50 // 默认值
@@ -189,13 +229,14 @@ export default {
     this.fetchItems()
   },
   methods: {
-    showDialog(row) {
-      console.log(row, 'row')
+    showDialog(row, isEdit) {
       this.currentConfig = row.configObject // 设置当前配置对象
-      this.currentConfig.id = row.id
+      if (isEdit) {
+        this.currentConfig.id = row.id
+      }
       this.currentConfig.name = row.name
-      this.dialogVisible = true // 显示模态窗口
-      console.log(this.currentConfig, '123123')
+      this.currentConfig.revision = row.revision
+      this.dialogVisible = !this.dialogVisible // 显示模态窗口
     },
     fetchStylesEnum() {
       return getFilterStyle().then(res => {
@@ -209,6 +250,7 @@ export default {
           item.configObject = JSON.parse(item.config)
         })
       })
+      console.log(this.currentConfig, '123123')
     },
     getComponentType(key, value) {
       if (typeof value === 'boolean') {
@@ -219,8 +261,23 @@ export default {
         return 'el-input'
       }
     },
+    handleFileUploadSuccess(response, file) {
+      // 处理上传成功后的逻辑，这里假设响应中包含了文件的下载路径
+      this.currentConfig.file = response.fileDownloadPath
+    },
+
+    beforeFileUpload(file) {
+      // 这里可以添加上传前的检查逻辑，例如文件大小限制等
+      return true // 返回false则停止上传
+    },
+
+    clearFile() {
+      // 清除已上传的文件
+      this.currentConfig.file = null
+    },
     saveConfig() {
-      // 创建一个新的配置对象，深度克隆当前配置
+      console.log(this.currentConfig)
+      /*      // 创建一个新的配置对象，深度克隆当前配置
       const configToSubmit = JSON.parse(JSON.stringify(this.currentConfig));
 
       // 遍历需要处理的字段
@@ -229,16 +286,17 @@ export default {
       })
 
       // 处理特殊字段的额外处理逻辑
-      if (typeof configToSubmit['fallback_extractor'] === 'string') {
+      if (this.isJsonString(configToSubmit.fallback_extractor)) {
         try {
-          configToSubmit['fallback_extractor'] = JSON.parse(configToSubmit['fallback_extractor'])
+          configToSubmit.fallback_extractor = JSON.parse(configToSubmit.fallback_extractor)
         } catch (e) {
           console.error('Error parsing fallback_extractor: ', e)
           // 处理解析错误，可能需要提供反馈给用户
         }
       }
+      console.log(configToSubmit.fallback_extractor, 123123)
       // 解析extractor字段为对象
-      if (typeof configToSubmit.extractor === 'string') {
+      if (this.isJsonString(configToSubmit.extractor)) {
         try {
           configToSubmit.extractor = JSON.parse(configToSubmit.extractor)
         } catch (e) {
@@ -246,32 +304,41 @@ export default {
           // 处理解析错误，可能需要提供反馈给用户
         }
       }
+      if (configToSubmit.openpose && this.isJsonString(configToSubmit.openpose.fallback_extractor)) {
+        try {
+          configToSubmit.openpose.fallback_extractor = JSON.parse(configToSubmit.openpose.fallback_extractor)
+        } catch (e) {
+          console.error('Error parsing openpose fallback_extractor: ', e)
+          // 处理解析错误，可能需要提供反馈给用户
+        }
+      }
       // 将整个 configToSubmit 转换为字符串以便保存
       const configString = JSON.stringify(configToSubmit)
-      console.log(configString, 'configString')
-
-      updateFilterStyle({
+      console.log(configString, '123')*/
+      /*    updateFilterStyle({
         id: configToSubmit.id,
         name: configToSubmit.name,
-        config: configString
+        config: configString,
+        revision: configToSubmit.revision
       })
         .then((res) => {
           if (res.status === 200) {
-          // 接口状态码为200，正常关闭模态窗口
+            // 接口状态码为200，正常关闭模态窗口
             this.$message.success('保存配置成功')
-            this.dialogVisible = false // 关闭模态框
-            location.reload() // 重新加载整个页面
           } else {
-          // 接口状态码非200，弹出错误提示
+            // 接口状态码非200，弹出错误提示
             this.$message.error('保存配置失败:' + res.statusText)
           // 这里你可以根据需要显示错误信息给用户
           }
+          setTimeout(() => {
+            location.reload()
+          }, 1000)
         })
         .catch((error) => {
         // 捕获其他可能的错误
           this.dialogVisible = false
           this.$message.error('保存配置时发生错误:' + error)
-        })
+        })*/
     },
     // 辅助函数，检查字符串是否为有效的 JSON
     isJsonString(str) {
@@ -300,5 +367,9 @@ export default {
   padding: 5px;
   background-color: #ebebeb;
   cursor: pointer;
+}
+.image-preview{
+  width: 200px;
+  height: 200px;
 }
 </style>

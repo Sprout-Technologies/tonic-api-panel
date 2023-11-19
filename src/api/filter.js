@@ -15,9 +15,9 @@ export function getById(id) {
   })
 }
 
-export function updateOne(data) {
+export function updateFilter(data) {
   return request({
-    url: '/admin/filter/',
+    url: '/admin/filter/update',
     method: 'post',
     data: data
   })
@@ -81,7 +81,7 @@ export function getFilterStyle(data) {
 
 export function updateFilterStyle(data) {
   return request({
-    url: '/admin/filterStyle',
+    url: '/admin/filterStyle/updateFilterStyle',
     method: 'post',
     data: data
   })
