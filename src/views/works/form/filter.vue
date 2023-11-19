@@ -15,8 +15,22 @@
       <el-form-item label="展示名称">
         <el-input v-model="form.name" disabled/>
       </el-form-item>
-      <el-form-item label="时长">
-        <el-input-number v-model="form.duration"/>
+      <el-form-item label="时长(展示)">
+        <el-input-number
+          v-model="form.duration"
+          :min="1"
+          :max="3600"
+          step="1"
+          controls-position="right">
+        </el-input-number>
+      </el-form-item>
+      <el-form-item label="时长(真实)">
+        <el-input-number
+          v-model="form.exDuration"
+          :min="1"
+          :max="3600"
+          controls-position="right">
+        </el-input-number>
       </el-form-item>
       <el-form-item label="是否新滤镜">
         <el-checkbox v-model="form.newFilter"/>
@@ -27,7 +41,7 @@
       <el-form-item label="trendingTiktok">
         <el-checkbox v-model="form.trendingTiktok"/>
       </el-form-item>
-      <el-form-item label="trendingInstagram">
+      <el-form-item label="trendicngInstagram">
         <el-checkbox v-model="form.trendingInstagram"/>
       </el-form-item>
       <el-form-item label="预览图">
@@ -245,7 +259,8 @@ export default {
         trigger_prompt: '',
         gender_prompt: '',
         temporalnet: null,
-        durations: []
+        durations: [],
+        exDuration: 0
       },
       base_models: {
         'cetusMix': 'general\\cetusMix_v4.safetensors [b42b09ff12]',
@@ -406,6 +421,9 @@ export default {
           duration.style = [tempObj]
         })
       }
+      if (this.form.exDuration) {
+        submitData.duration = this.form.exDuration
+      }
       // 创建最终提交数据对象
       const finalData = {
         id: submitData.id || this.id,
@@ -415,7 +433,7 @@ export default {
         songName: submitData.songName,
         artistName: submitData.artistName,
         name: submitData.name,
-        duration: submitData.duration,
+        duration: this.form.duration,
         newFilter: submitData.newFilter,
         popular: submitData.popular,
         trendingTiktok: submitData.trendingTiktok,
@@ -424,7 +442,7 @@ export default {
         revision: submitData.revision,
         updatedAt: submitData.updatedAt,
         weight: submitData.weight,
-
+        createdAt: submitData.createdAt,
         // 可能还有其他需要添加的字段...
         params: JSON.stringify(submitData)
       }
@@ -432,8 +450,9 @@ export default {
       delete submitData.icon
       delete submitData.previewCoverImage
       delete submitData.previewVideo
+      delete submitData.songName
+      delete submitData.artistName
       delete submitData.name
-      delete submitData.duration
       delete submitData.newFilter
       delete submitData.popular
       delete submitData.trendingTiktok
@@ -442,8 +461,10 @@ export default {
       delete submitData.revision
       delete submitData.updatedAt
       delete submitData.weight
-
+      delete submitData.createdAt
+      delete submitData.exDuration
       finalData.params = JSON.stringify(submitData)
+      console.log(finalData, 'finalData')
       updateFilter(finalData).then(response => {
         if (response.status === 200) {
           this.$message({
@@ -550,12 +571,14 @@ export default {
         previewCoverImage: res.previewCoverImage,
         previewVideo: res.previewVideo,
         name: res.name,
-
         // 已有的属性
         ...deepCopiedFilter
       }
-
-      console.log(this.form, 'this.form')
+      // 时长(真实)是在filter的params里面的，所以需要单独处理。
+      this.form.duration = res.duration
+      console.log(res.duration, 'res.duration')
+      this.form.exDuration = deepCopiedFilter.duration
+      console.log(deepCopiedFilter, 'this.form')
       this.$forceUpdate()
     },
     async fetchStylesEnum() {
