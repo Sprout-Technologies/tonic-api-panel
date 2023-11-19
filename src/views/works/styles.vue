@@ -122,10 +122,10 @@
               <el-form-item label="Fallback Extractor">
                 <el-select v-model="currentConfig.openpose.fallback_extractor">
                   <el-option
-                    v-for="(extractor, key) in feature_extractor"
-                    :key="key"
-                    :label="key"
-                    :value="JSON.stringify(extractor)"
+                    v-for="(extractor, extractorKey) in feature_extractor"
+                    :key="extractorKey"
+                    :label="extractor.model"
+                    :value="extractor.model"
                   ></el-option>
                 </el-select>
               </el-form-item>
@@ -250,6 +250,7 @@ export default {
           item.configObject = JSON.parse(item.config)
         })
       })
+      console.log(this.currentConfig, '123123')
     },
     getComponentType(key, value) {
       if (typeof value === 'boolean') {
@@ -275,7 +276,8 @@ export default {
       this.currentConfig.file = null
     },
     saveConfig() {
-      // 创建一个新的配置对象，深度克隆当前配置
+      console.log(this.currentConfig)
+      /*      // 创建一个新的配置对象，深度克隆当前配置
       const configToSubmit = JSON.parse(JSON.stringify(this.currentConfig));
 
       // 遍历需要处理的字段
@@ -292,7 +294,7 @@ export default {
           // 处理解析错误，可能需要提供反馈给用户
         }
       }
-
+      console.log(configToSubmit.fallback_extractor, 123123)
       // 解析extractor字段为对象
       if (this.isJsonString(configToSubmit.extractor)) {
         try {
@@ -312,8 +314,8 @@ export default {
       }
       // 将整个 configToSubmit 转换为字符串以便保存
       const configString = JSON.stringify(configToSubmit)
-      console.log(configString, '123')
-      updateFilterStyle({
+      console.log(configString, '123')*/
+      /*    updateFilterStyle({
         id: configToSubmit.id,
         name: configToSubmit.name,
         config: configString,
@@ -336,7 +338,7 @@ export default {
         // 捕获其他可能的错误
           this.dialogVisible = false
           this.$message.error('保存配置时发生错误:' + error)
-        })
+        })*/
     },
     // 辅助函数，检查字符串是否为有效的 JSON
     isJsonString(str) {

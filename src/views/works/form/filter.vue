@@ -1,8 +1,34 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="form" label-width="120px">
+      <el-form-item label="上线状态">
+        <el-select v-model="form.visibilityStatus" placeholder="上线状态">
+          <el-option v-for="(item, key) in visibilityStatusEnum" :key="key" :label="item.label" :value="item.value"/>
+        </el-select>
+      </el-form-item>
       <el-form-item label="滤镜名">
-        <el-input v-model="form.name"/>
+        <el-input v-model="form.songName"/>
+      </el-form-item>
+      <el-form-item label="艺术家名">
+        <el-input v-model="form.artistName"/>
+      </el-form-item>
+      <el-form-item label="展示名称">
+        <el-input v-model="form.name" disabled/>
+      </el-form-item>
+      <el-form-item label="时长">
+        <el-input-number v-model="form.duration"/>
+      </el-form-item>
+      <el-form-item label="是否新滤镜">
+        <el-checkbox v-model="form.newFilter"/>
+      </el-form-item>
+      <el-form-item label="popular">
+        <el-checkbox v-model="form.popular"/>
+      </el-form-item>
+      <el-form-item label="trendingTiktok">
+        <el-checkbox v-model="form.trendingTiktok"/>
+      </el-form-item>
+      <el-form-item label="trendingInstagram">
+        <el-checkbox v-model="form.trendingInstagram"/>
       </el-form-item>
       <el-form-item label="预览图">
         <el-upload
@@ -177,7 +203,7 @@
 
 
 <script>
-import { getById, updateFilter, getFilterStyle } from '@/api/filter'
+import { getById, getFilterStyle, updateFilter } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
 import axios from 'axios'
 import MySelect from './MySelect.vue'
@@ -309,7 +335,12 @@ export default {
         'shuffle_mode2': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0,
           'end': 1, 'control_mode': 2 }
 
-      }
+      },
+      visibilityStatusEnum: [
+        { value: 0, label: '隐藏' },
+        { value: 1, label: '上线' },
+        { value: 2, label: '测试' }
+      ]
     }
   },
   methods: {
@@ -324,7 +355,6 @@ export default {
       this.$forceUpdate()
     },
     handleVideoSuccess(res, file) {
-      console.log(res, 'res')
       this.form.previewVideo = res.fileDownloadPath
       this.$forceUpdate()
     },
@@ -359,44 +389,61 @@ export default {
     saveData() {
       // 从 this.form 创建 submitData 的副本
       const submitData = JSON.parse(JSON.stringify(this.form))
+      delete submitData.params
       // 将字符串转换回对象
       // 处理 styler
       if (submitData.stylerKey && this.stylers[submitData.stylerKey]) {
         submitData.styler = this.stylers[submitData.stylerKey]
-      } else {
-        submitData.styler = null
       }
 
       // 处理 extractor
       if (submitData.extractorKey && this.feature_extractor[submitData.extractorKey]) {
         submitData.extractor = this.feature_extractor[submitData.extractorKey]
-      } else {
-        submitData.extractor = null
       }
-      // 确保 durations 中的 style 字段是单个对象
       if (submitData.durations) {
         submitData.durations.forEach(duration => {
-          if (Array.isArray(duration.style) && duration.style.length > 0) {
-            // 取数组的第一个元素作为 style 对象
-            duration.style = duration.style[0]
-          }
-          if (typeof duration.style === 'string') {
-            duration.style = JSON.parse(duration.style)
-          }
+          const tempObj = JSON.parse(duration.style)
+          duration.style = [tempObj]
         })
       }
-      console.log(submitData.durations[0].style, '第一项')
-      /*    console.log(this.stylesEnum[54].stringValue, 'this.stylesEnum[40]')*/
       // 创建最终提交数据对象
       const finalData = {
-        id: submitData.id || this.id || null,
+        id: submitData.id || this.id,
         icon: submitData.icon,
         previewCoverImage: submitData.previewCoverImage,
         previewVideo: submitData.previewVideo,
+        songName: submitData.songName,
+        artistName: submitData.artistName,
         name: submitData.name,
+        duration: submitData.duration,
+        newFilter: submitData.newFilter,
+        popular: submitData.popular,
+        trendingTiktok: submitData.trendingTiktok,
+        trendingInstagram: submitData.trendingInstagram,
+        visibilityStatus: submitData.visibilityStatus,
+        revision: submitData.revision,
+        updatedAt: submitData.updatedAt,
+        weight: submitData.weight,
+
+        // 可能还有其他需要添加的字段...
         params: JSON.stringify(submitData)
       }
-      console.log(JSON.parse(finalData.params).durations[0], 'finalData')
+      delete submitData.id
+      delete submitData.icon
+      delete submitData.previewCoverImage
+      delete submitData.previewVideo
+      delete submitData.name
+      delete submitData.duration
+      delete submitData.newFilter
+      delete submitData.popular
+      delete submitData.trendingTiktok
+      delete submitData.trendingInstagram
+      delete submitData.visibilityStatus
+      delete submitData.revision
+      delete submitData.updatedAt
+      delete submitData.weight
+
+      finalData.params = JSON.stringify(submitData)
       updateFilter(finalData).then(response => {
         if (response.status === 200) {
           this.$message({
@@ -483,8 +530,31 @@ export default {
           duration.style = JSON.stringify(...duration.style)
         }
       })
+
       // 更新 form 数据
-      this.form = { previewCoverImage: res.preview_cover_image, previewVide: res.preview_video, ...res, ...deepCopiedFilter }
+      this.form = {
+        // 新增或修改的属性
+        artistName: res.artistName,
+        songName: res.songName,
+        newFilter: res.newFilter,
+        trendingInstagram: res.trendingInstagram,
+        trendingTiktok: res.trendingTiktok,
+        popular: res.popular,
+        revision: res.revision,
+        weight: res.weight,
+        duration: res.duration,
+        createdAt: res.createdAt,
+        updatedAt: res.updatedAt,
+        id: res.id,
+        icon: res.icon,
+        previewCoverImage: res.previewCoverImage,
+        previewVideo: res.previewVideo,
+        name: res.name,
+
+        // 已有的属性
+        ...deepCopiedFilter
+      }
+
       console.log(this.form, 'this.form')
       this.$forceUpdate()
     },
