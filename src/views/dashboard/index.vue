@@ -159,7 +159,7 @@
         list: null,
         listLoading: true,
         listQuery: {
-            size: 10,
+            size: 30,
             page: 0,
           sort:['createdAt,desc']
           // sort:['createdAt,desc','hidden,asc'],
