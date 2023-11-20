@@ -134,7 +134,7 @@
                        @current-change="handleCurrentChange"
                        :current-page="this.currPage"
                        :page-count="this.maxPage"
-                       :page-sizes="[10,20,30,50]"
+                       :page-sizes="[30,50,70,100]"
                        :page-size="listQuery.size"
                        layout="total, sizes, prev, pager, next"
         >
