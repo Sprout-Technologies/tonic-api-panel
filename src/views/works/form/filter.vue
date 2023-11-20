@@ -12,8 +12,8 @@
       <el-form-item label="艺术家名">
         <el-input v-model="form.artistName"/>
       </el-form-item>
-      <el-form-item label="展示名称">
-        <el-input v-model="form.name" disabled/>
+      <el-form-item label="展示名称(这个名称将被展示在APP/滤镜列表中)">
+        <el-input v-model="form.name"/>
       </el-form-item>
       <el-form-item label="时长(展示)">
         <el-input-number
@@ -84,6 +84,20 @@
           </i>
         </el-upload>
       </el-form-item>
+      <el-form-item label="音乐">
+        <el-upload
+          class="avatar-uploader"
+          :show-file-list="false"
+          :action="uploadAction"
+          :headers="uploadToken"
+          :on-success="handleMusicSuccess"
+        >
+          <video v-if="form.music" :src="form.music" controls class="video-preview"></video>
+          <i v-else class="el-icon-plus avatar-uploader-icon">
+            上传音乐
+          </i>
+        </el-upload>
+      </el-form-item>
       <el-form-item label="去噪强度">
         <el-input-number size="mini" controls-position="right" :step="1" v-model="form.denoising_strength"></el-input-number>
       </el-form-item>
@@ -115,34 +129,30 @@
       <el-form-item label="底模">
         <my-select v-model="form.base_model" :options="base_models" placeholder="选择底模"></my-select>
       </el-form-item>
-      <el-form-item label="触发词">
-        <el-input v-model="form.trigger_prompt"></el-input>
+      <el-form-item label="触发词(暂不需要）">
+        <el-input v-model="form.trigger_prompt" disabled></el-input>
       </el-form-item>
       <el-form-item label="性别触发词">
         <el-input v-model="form.gender_prompt"></el-input>
       </el-form-item>
-      <el-form-item label="TemporalNet">
+      <el-form-item label="TemporalNet" disabled>
         <my-select v-model="form.temporalnet" :options="temporalnet" placeholder="选择TemporalNet"></my-select>
       </el-form-item>
       <el-form-item label="Durations">
         <div v-for="(duration, index) in form.durations" :key="index">
           <el-row>
-            <el-col :span="4" class="row-spacing">
-              <el-form-item label="Start(秒)">
-                <el-input-number v-model="duration.startSeconds"></el-input-number>
+              <el-form-item label="Start(秒)" style="width: 260px">
+                <el-input v-model="duration.startSeconds"></el-input>
               </el-form-item>
-              <el-form-item label="Start(帧)">
-                <el-input-number v-model="duration.startFrames"></el-input-number>
+              <el-form-item label="Start(帧)" style="width: 260px">
+                <el-input v-model="duration.startFrames"></el-input>
               </el-form-item>
-            </el-col>
-            <el-col :span="4" class="row-spacing">
-              <el-form-item label="End(秒)">
-                <el-input-number v-model="duration.endSeconds"></el-input-number>
+              <el-form-item label="End(秒)" style="width: 260px">
+                <el-input v-model="duration.endSeconds"></el-input>
               </el-form-item>
-              <el-form-item label="End(帧)">
-                <el-input-number v-model="duration.endFrames"></el-input-number>
+              <el-form-item label="End(帧)" style="width: 260px">
+                <el-input v-model="duration.endFrames"></el-input>
               </el-form-item>
-            </el-col>
             <el-form-item label="Styles">
               <el-col :span="8" class="row-spacing">
                 <el-select
@@ -244,7 +254,23 @@ export default {
       exampleData: [],
       loading: false,
       progressPercentage: 0,
+      music: '',
       form: {
+        artistName: '',
+        songName: '',
+        newFilter: false,
+        trendingInstagram: false,
+        trendingTiktok: false,
+        popular: false,
+        revision: 0,
+        weight: 0,
+        duration: 10,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        icon: '',
+        previewCoverImage: '',
+        previewVideo: '',
+        visibilityStatus: 0,
         name: '',
         denoising_strength: null,
         stylerKey: '',
@@ -277,6 +303,7 @@ export default {
       },
 
       tile: {
+        '无': {},
         'tile_resample': {
           'module': 'tile_resample',
           'control_mode': 0,
@@ -307,6 +334,7 @@ export default {
       },
 
       feature_extractor: {
+        '无': {},
         'lineart_realistic_prompt': {
           'control_mode': 1,
           'module': 'lineart_realistic',
@@ -343,6 +371,7 @@ export default {
         }
       },
       stylers: {
+        '无': {},
         't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
         'shuffle': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0, 'end': 1 },
         'shuffle_weight15': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 0.15, 'start': 0.0,
@@ -366,11 +395,26 @@ export default {
       }
     },
     handleIconSuccess(res, file) {
-      this.form.icon = res.fileDownloadPath
+      if (res.fileDownloadPath) {
+        this.form.icon = res.fileDownloadPath.replace(
+          'https://sprout-tonic-app210644-dev.s3-accelerate.amazonaws.com/public/',
+          'https://dkfyqdved0mrm.cloudfront.net/public/'
+        )
+      }
       this.$forceUpdate()
     },
     handleVideoSuccess(res, file) {
-      this.form.previewVideo = res.fileDownloadPath
+      this.form.previewVideo = res.fileDownloadPath.replace(
+        'https://sprout-tonic-app210644-dev.s3-accelerate.amazonaws.com/public/',
+        'https://dkfyqdved0mrm.cloudfront.net/public/'
+      )
+      this.$forceUpdate()
+    },
+    handleMusicSuccess(res, file) {
+      this.form.music = res.fileDownloadPath.replace(
+        'https://sprout-tonic-app210644-dev.s3-accelerate.amazonaws.com/public/',
+        'https://dkfyqdved0mrm.cloudfront.net/public/'
+      )
       this.$forceUpdate()
     },
     beforeAvatarUpload(file) {
@@ -388,10 +432,10 @@ export default {
         startFrames: 0,
         endSeconds: 0,
         endFrames: 0,
-        styler: [],
+        style: [],
         type: null,
         interpolation: false,
-        frame_per_style: 0,
+        frame_per_style: 2,
         outpaint: {
           mask_vid: '',
           mask_sd: ''
@@ -419,6 +463,9 @@ export default {
         submitData.durations.forEach(duration => {
           const tempObj = JSON.parse(duration.style)
           duration.style = [tempObj]
+          console.log(duration.startSeconds, duration.startFrames)
+          duration.start = Number(duration.startSeconds) + (Number(duration.startFrames) / 30)
+          duration.end = Number(duration.endSeconds) + (Number(duration.endFrames) / 30)
         })
       }
       if (this.form.exDuration) {
@@ -466,15 +513,11 @@ export default {
       finalData.params = JSON.stringify(submitData)
       console.log(finalData, 'finalData')
       updateFilter(finalData).then(response => {
-        if (response.status === 200) {
-          this.$message({
-            message: '保存成功',
-            type: 'success'
-          })
-          this.$router.push('/filter')
-        } else {
-          this.$message.error('保存失败')
-        }
+        this.$message({
+          message: '保存成功',
+          type: 'success'
+        })
+        this.$router.push('/filter')
       }).catch(error => {
         this.$message.error('保存失败: ' + error)
       })
@@ -547,11 +590,11 @@ export default {
         // 计算 endSeconds 和 endFrames
         duration.endSeconds = Math.floor(duration.end)
         duration.endFrames = Math.round((duration.end - duration.endSeconds) * 30)
+        console.log(duration.startSeconds, duration.startFrames, duration.endSeconds, duration.endFrames)
         if (duration.style) {
           duration.style = JSON.stringify(...duration.style)
         }
       })
-
       // 更新 form 数据
       this.form = {
         // 新增或修改的属性
