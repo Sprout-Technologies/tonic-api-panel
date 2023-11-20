@@ -2,7 +2,7 @@
   <div class="app-container">
 
     <el-footer style="margin-top:30px">
-      <el-button type="primary" @click="featureSubmit">{{this.form.weight && this.form.weight>0.0 ? '取消精选':'精选'}}</el-button>
+<!--      <el-button type="primary" @click="featureSubmit">{{this.form.weight && this.form.weight>0.0 ? '取消精选':'精选'}}</el-button>-->
       <el-button type="primary" @click="demoSubmit">设置为{{this.form.videos[0].filter.name}}的演示视频</el-button>
 
       <el-button @click="onCancel">返回</el-button>

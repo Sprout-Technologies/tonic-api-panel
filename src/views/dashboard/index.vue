@@ -35,16 +35,16 @@
         element-loading-text="Loading"
         :default-sort = "{prop: 'weight', order: 'ascending'}"
         border fit highlight-current-row>
-        <el-table-column align="center" label='Post id'>
-          <template slot-scope="scope">
-            {{scope.row.id}}
-          </template>
-        </el-table-column>
-        <el-table-column align="center" label='Video id'>
-          <template slot-scope="scope">
-            {{scope.row.videos[0].id}}
-          </template>
-        </el-table-column>
+<!--        <el-table-column align="center" label='Post id'>-->
+<!--          <template slot-scope="scope">-->
+<!--            {{scope.row.id}}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
+<!--        <el-table-column align="center" label='Video id'>-->
+<!--          <template slot-scope="scope">-->
+<!--            {{scope.row.videos[0].id}}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
         <el-table-column align="center" label='滤镜名'>
           <template slot-scope="scope">
             {{scope.row.videos[0].filter.name}}
@@ -52,10 +52,9 @@
         </el-table-column>
         <el-table-column align="center" label='缩略图'>
           <template slot-scope="scope">
-            <div v-if="scope.row.videos[0].thumbnail" style="background-color: black; max-height: 50px;">
-              <img :src="scope.row.videos[0].thumbnail" style="max-height: 50px;"/>
-              <img :src="scope.row.videos[0].thumbnail.replace('last_preview','first_frame')" style="max-height: 50px;"/>
-
+            <div v-if="scope.row.videos[0].thumbnail" style="background-color: black; max-height: 100px;">
+              <img :src="scope.row.videos[0].thumbnail" style="max-height: 100px;"/>
+              <img :src="scope.row.videos[0].thumbnail.replace('last_preview','first_frame')" style="max-height: 100px;"/>
             </div>
           </template>
         </el-table-column>
@@ -63,7 +62,7 @@
           prop="hidden"
           label="用户" align="center">
           <template slot-scope="scope">
-            {{scope.row.user.nickname}}({{scope.row.user.id}})
+            {{scope.row.user.nickname}} <el-button type="primary" size="mini" @click="copyIdToClipboard(scope.row.user.id)">id</el-button>
           </template>
         </el-table-column>
         <!--<el-table-column-->
@@ -95,7 +94,18 @@
             {{scope.row.createdAt | moment('YYYY-MM-DD hh:mm:ss')}}
           </template>
         </el-table-column>
-
+<!--        <el-table-column align="center" label='精选'>-->
+<!--          <template slot-scope="scope">-->
+<!--            <el-button type="primary" size="mini" @click="featureSubmit(scope.row.id)">{{scope.row.visibilityStatus ===1 && scope.row.weight<=0.0 ? '取消精选 ':'精选'}}</el-button>-->
+<!--          </template>-->
+<!--        </el-table-column>-->
+        <el-table-column align="center" label='拷贝视频'>
+          <template slot-scope="scope">
+            <el-button type="primary" size="mini" @click="copyIdToClipboard(scope.row.videos[0].id)">id</el-button>
+            <el-button type="primary" size="mini" @click="copyOriginalVidUrlToClipboard(scope.row.videos[0].id)">原</el-button>
+            <el-button type="primary" size="mini" @click="copyVidUrlToClipboard(scope.row.videos[0])">高分</el-button>
+          </template>
+        </el-table-column>
 
 <!--        <el-table-column class-name="status-col" label="操作" width="200" align="center">-->
 <!--          <template slot-scope="scope">-->
@@ -111,7 +121,7 @@
           <template slot-scope="scope">
             <el-button-group>
               <el-button type="primary" icon="el-icon-edit" size="mini" @click="handleEdit(scope.$index, scope.row)"></el-button>
-              <el-button type="primary" icon="el-icon-document-copy" size="mini" @click="copyVidUrlToClipboard(scope.row.videos[0])"></el-button>
+                          <el-button type="primary" size="mini" @click="featureSubmit(scope.row.id)">{{scope.row.visibilityStatus === 1 && scope.row.weight>0.0 ? '撤':'精'}}</el-button>
 
               <el-button type="danger" icon="el-icon-delete" size="mini" @click="handleDelete(scope.$index, scope.row)"></el-button>
             </el-button-group>
@@ -141,6 +151,7 @@
   // import {getList as getCategoryList} from "@/api/category"
   // import {getList as getProductsList} from "@/api/artist"
   import Sortable from 'sortablejs'
+  import { feature, getOriginalVidFile } from '@/api/post'
 
   export default {
     data() {
@@ -197,6 +208,15 @@
         if (!url){url = video.url}
         navigator.clipboard.writeText(url).then(() => {this.$message.success('复制成功')})
       },
+      copyOriginalVidUrlToClipboard (id) {
+        getOriginalVidFile(id).then(response => {
+          navigator.clipboard.writeText(response).then(() => {this.$message.success('复制成功')})
+        })
+      },
+      copyIdToClipboard(id){
+        navigator.clipboard.writeText(id).then(() => {this.$message.success('复制成功')})
+
+      },
       getList(){
         this.listLoading = true
         return queryList(this.listQuery).then(response => {
@@ -212,6 +232,18 @@
             })
         })
       },
+
+      featureSubmit(id) {
+        feature(id).then(() => {
+            this.$message({
+              message: '提交成功!',
+              type: 'success'
+            })
+          this.fetchData()
+          }
+        )
+      },
+
         updateList(){
             this.listLoading = true
             return updateBatch(this.list).then(response => {

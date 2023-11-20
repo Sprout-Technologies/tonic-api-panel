@@ -8,6 +8,7 @@ export function getList() {
 }
 
 export function queryList(p) {
+  p['visibilityStatus'] = [1,2]
   return request({
     url: '/admin/post/query',
     method: 'get',
@@ -48,6 +49,13 @@ export function updateOne(data) {
 export function feature(id) {
   return request({
     url: '/admin/post/feature/'+id,
+    method: 'get',
+  })
+}
+
+export function getOriginalVidFile(id) {
+  return request({
+    url: '/admin/post/originalFile/video/'+id,
     method: 'get',
   })
 }
