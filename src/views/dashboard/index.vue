@@ -97,7 +97,7 @@
         <el-table-column sortable
                          label="使用了自定义音频" align="center">
           <template slot-scope="scope">
-            {{scope.row.useOriginalAudio? '否' : '是'}}
+            {{scope.row.useOriginalAudio? '是' : '否'}}
           </template>
         </el-table-column>
 <!--        <el-table-column align="center" label='精选'>-->
