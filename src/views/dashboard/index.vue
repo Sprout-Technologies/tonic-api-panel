@@ -94,6 +94,12 @@
             {{scope.row.createdAt | moment('YYYY-MM-DD hh:mm:ss')}}
           </template>
         </el-table-column>
+        <el-table-column sortable
+                         label="使用了自定义音频" align="center">
+          <template slot-scope="scope">
+            {{scope.row.useOriginalAudio? '否' : '是'}}
+          </template>
+        </el-table-column>
 <!--        <el-table-column align="center" label='精选'>-->
 <!--          <template slot-scope="scope">-->
 <!--            <el-button type="primary" size="mini" @click="featureSubmit(scope.row.id)">{{scope.row.visibilityStatus ===1 && scope.row.weight<=0.0 ? '取消精选 ':'精选'}}</el-button>-->
