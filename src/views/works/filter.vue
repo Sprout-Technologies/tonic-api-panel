@@ -19,14 +19,6 @@
           <i class="el-icon-edit"></i>
           <span>新增</span>
         </el-button>
-        <el-button type="success" @click="handleBatchPublish()" plain>
-          <i class="el-icon-upload"></i>
-          <span>批量发布</span>
-        </el-button>
-        <el-button type="danger" @click="informUsers()" plain>
-          <i class="el-icon-upload"></i>
-          <span>通知用户</span>
-        </el-button>
 
         <el-upload
           class="upload-demo"
@@ -48,7 +40,6 @@
       <el-table
         stripe
         :data="list"
-        ref="dragTable"
         v-loading.body="listLoading"
         element-loading-text="Loading"
         :default-sort = "{prop: 'createdAt', order: 'ascending'}"
@@ -171,54 +162,6 @@ export default {
       return updateOrder(payload).then(response => {
         this.listLoading = false
       })
-    },
-    setSort() {
-      const el = this.$refs.dragTable.$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0]
-      this.sortable = Sortable.create(el, {
-        ghostClass: 'sortable-ghost', // Class name for the drop placeholder,
-        setData: function(dataTransfer) {
-          // to avoid Firefox bug
-          // Detail see : https://github.com/RubaXa/Sortable/issues/1012
-          dataTransfer.setData('Text', '')
-        },
-        onEnd: evt => {
-          console.log(this.move(this.list, evt.oldIndex, evt.newIndex))
-          // const targetRow = this.list.splice(evt.oldIndex, 1)[0]
-          console.log(evt.oldIndex)
-          console.log(evt)
-
-          // this.list.splice(evt.newIndex, 0, targetRow)
-          // for show the changes, you can delete in you code
-          const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-          this.newList.splice(evt.newIndex, 0, tempIndex)
-
-          this.orderList(this.newList.map((val, idx) => {
-            return {
-              id: this.list[val].id,
-              weight: idx
-            }
-          }))
-        }
-      })
-    },
-
-    move(arr, index, tindex) {
-      // 如果当前元素在拖动目标位置的下方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置的地方新增一个和当前元素值一样的元素，
-      // 我们再把数组之前的那个拖动的元素删除掉，所以要len+1
-      var arr = JSON.parse(JSON.stringify(arr))
-      if (index > tindex) {
-        arr.splice(tindex, 0, arr[index])
-        arr.splice(index + 1, 1)
-      } else {
-        // 如果当前元素在拖动目标位置的上方，先将当前元素从数组拿出，数组长度-1，我们直接给数组拖动目标位置+1的地方新增一个和当前元素值一样的元素，
-        // 这时，数组len不变，我们再把数组之前的那个拖动的元素删除掉，下标还是index
-        arr.splice(tindex + 1, 0, arr[index])
-        arr.splice(index, 1)
-      }
-      for (let i = 0; i < arr.length; i++) {
-        arr[i].weight = i
-      }
-      return arr
     },
 
     handleDelete(idx, r) {

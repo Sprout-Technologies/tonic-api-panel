@@ -1,6 +1,9 @@
 <template>
   <div class="app-container">
     <el-form ref="form" :model="form" label-width="120px">
+      <el-form-item label="从现有滤镜复制" v-if="!form.id">
+        <el-button @click="handleImportTemplate()">导入滤镜</el-button>
+      </el-form-item>
       <el-form-item label="上线状态">
         <el-select v-model="form.visibilityStatus" placeholder="上线状态">
           <el-option v-for="(item, key) in visibilityStatusEnum" :key="key" :label="item.label" :value="item.value"/>
@@ -211,23 +214,21 @@
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
       </el-form-item>
     </el-form>
-    <el-dialog v-if="showImportModal" title="导入测试滤镜" :visible.sync="showImportModal"   @close="handleDialogClose">
-      <el-progress v-if="loading" type="line" :percentage="progressPercentage" :stroke-width="2" />
-      <el-scrollbar style="height: 400px;" v-else>
-      <el-row v-for="(filter, index) in exampleData" :key="filter" class="filter-item">
-        <el-col :span="20">{{ filter.name }}</el-col>
+    <el-dialog v-if="showImportModal" title="导入现有滤镜(滤镜名/最后更新时间)" :visible.sync="showImportModal"   @close="handleDialogClose">
+      <el-row v-for="(res, index) in exampleData" :key="res" class="filter-item">
+        <el-col :span="20" >{{ res.name }}</el-col>
+        <el-col :span="20">{{ formatTimestamp(res.updatedAt) || '无更新时间'}}</el-col>
         <el-col :span="4">
-          <el-button size="mini" type="primary" @click="importFilter(filter)">导入</el-button>
+          <el-button size="mini" type="primary" @click="importFilter(undefined,res)">导入</el-button>
         </el-col>
       </el-row>
-        </el-scrollbar>
     </el-dialog>
   </div>
 </template>
 
 
 <script>
-import { getById, getFilterStyle, updateFilter } from '@/api/filter'
+import { getById, getFilterStyle, updateFilter, queryList } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
 import axios from 'axios'
 import MySelect from './MySelect.vue'
@@ -388,6 +389,10 @@ export default {
     }
   },
   methods: {
+    formatTimestamp(timestamp) {
+      const date = new Date(timestamp)
+      return date.toLocaleString('zh-CN', { hour12: false })
+    },
     handlePreviewCoverImageSuccess(res, file) {
       if (res.response) {
         this.form.previewCoverImage = res.response.fileDownloadPath
@@ -527,57 +532,20 @@ export default {
     },
     handleImportTemplate() {
       this.showImportModal = !this.showImportModal
-      this.loading = true // 设置 loading 为 true
-      this.progressPercentage = 0 // 重置进度条的值为0
-
-      const url = 'https://api.jsonsilo.com/public/4eb4bf97-3561-416d-9a69-509f392f96c6'
-      const headers = {
-        'Content-Type': 'application/json'
-      }
-
-      const instance = axios.create()
-      instance.defaults.onDownloadProgress = (progressEvent) => {
-        const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        this.progressPercentage = percentage // 更新进度条的值
-      }
-
-      let progress = 0
-      const increaseProgress = () => {
-        if (progress < 100) {
-          progress += 2 // 每次增加2%，可以根据需要调整增加速度
-          if (progress > 100) {
-            progress = 100 // 确保进度不超过100%
-          }
-          this.progressPercentage = progress // 更新进度条的值
-          setTimeout(increaseProgress, 50) // 每50毫秒增加一次进度，可以根据需要调整增加频率
-        } else {
-          this.loading = false // 请求完成后，将 loading 设置为 false
-        }
-      }
-
-      const handleProgress = (progressEvent) => {
-        if (progressEvent.lengthComputable) {
-          const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          this.progressPercentage = percentage // 更新进度条的值
-        }
-      }
-
-      instance
-        .get(url, { headers: headers, onDownloadProgress: handleProgress })
-        .then((response) => {
-          this.exampleData = response.data
-          console.log(this.exampleData[0], 'test')
-        })
-        .catch((error) => {
-          console.error('There was an error with the request:', error)
-        })
-        .finally(() => {
-          this.loading = false // 请求完成后，将 loading 设置为 false
-        })
-
-      setTimeout(increaseProgress, 500) // 从0开始增加进度
+      queryList({
+        size: 99999,
+        page: 0,
+        sort: ['weight,asc', 'updatedAt,desc']
+      }).then(res => {
+        this.exampleData = res.content
+      })
     },
     importFilter(filter, res) {
+      let isCreateAndImport = false
+      if (!filter) {
+        filter = JSON.parse(res.params)
+        isCreateAndImport = true
+      }
       // 使用 JSON 方法进行深拷贝
       const deepCopiedFilter = JSON.parse(JSON.stringify(filter))
 
@@ -620,9 +588,10 @@ export default {
       }
       // 时长(真实)是在filter的params里面的，所以需要单独处理。
       this.form.duration = res.duration
-      console.log(res.duration, 'res.duration')
       this.form.exDuration = deepCopiedFilter.duration
-      console.log(deepCopiedFilter, 'this.form')
+      if (isCreateAndImport) {
+        this.form.id = null
+      }
       this.$forceUpdate()
     },
     async fetchStylesEnum() {
