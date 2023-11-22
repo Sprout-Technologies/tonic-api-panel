@@ -187,7 +187,7 @@
                 <el-input-number v-model="duration.frame_per_style"></el-input-number>
               </el-form-item>
             </el-col>
-            <el-col :span="8" class="row-spacing" v-if="duration.outpaint">
+<!--            <el-col :span="8" class="row-spacing" v-if="duration.outpaint">
               <el-form-item label="Mask Vid">
                 <el-input v-model="duration.outpaint.mask_vid"></el-input>
               </el-form-item>
@@ -196,7 +196,7 @@
               <el-form-item label="Mask Sd">
                 <el-input v-model="duration.outpaint.mask_sd"></el-input>
               </el-form-item>
-            </el-col>
+            </el-col>-->
             <el-col :span="24">
               <el-button type="text" @click="removeDuration(index)">删除</el-button>
             </el-col>
@@ -435,11 +435,11 @@ export default {
         style: [],
         type: null,
         interpolation: false,
-        frame_per_style: 2,
-        outpaint: {
+        frame_per_style: 2
+        /*    outpaint: {
           mask_vid: '',
           mask_sd: ''
-        }
+        }*/
       })
     },
     removeDuration(index) {

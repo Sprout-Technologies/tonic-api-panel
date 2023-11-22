@@ -81,7 +81,7 @@ export function getFilterStyle(data) {
 
 export function updateFilterStyle(data) {
   return request({
-    url: '/admin/filterStyle/updateFilterStyle',
+    url: '/admin/filterStyle/',
     method: 'post',
     data: data
   })
