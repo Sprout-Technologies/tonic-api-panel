@@ -19,7 +19,7 @@ if (hostname === 'localhost') {
   envBaseApi = 'https://beta.tonic.video/api/v1'
 } else if (hostname === 'app.tonic.video') {
   // 生产环境
-  envBaseApi = 'https://app.tonic.video/api/v1/'
+  /* envBaseApi = 'https://app.tonic.video/api/v1/'*/
 }
 const service = axios.create({
   baseURL: envBaseApi, // api的base_url
