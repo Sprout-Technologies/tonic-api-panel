@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <el-header style="text-align: right; font-size: 12px">
-      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="邮箱搜索" v-model="listQuery.id">
+      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="id搜索" v-model="listQuery.id">
       </el-input>
       <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="用户名搜索" v-model="listQuery.nickname">
       </el-input>
@@ -67,6 +67,7 @@
           <template slot-scope="scope">
             <el-button-group>
               <el-button type="primary" icon="el-icon-edit" size="mini" @click="handleEdit(scope.$index, scope.row)"></el-button>
+              <el-button type="primary" size="mini" @click="kolSubmit(scope.row.id)">{{scope.row.fake === true ? '撤':'白'}}</el-button>
               <el-button type="danger" icon="el-icon-delete" size="mini" @click="handleDelete(scope.$index, scope.row)"></el-button>
             </el-button-group>
           </template>
@@ -89,7 +90,7 @@
 </template>
 
 <script>
-import {queryList, deleteById} from "@/api/user"
+import {queryList, deleteById, kol} from "@/api/user"
 
 export default {
   data() {
@@ -137,6 +138,15 @@ export default {
       let pushDest = r ? { name: '管理用户表单', params: { id: r.id }} : { name: '管理用户表单' , params: { id: 'create'}}
       this.$router.push(pushDest)
     },
+    kolSubmit(id){
+      kol(id).then(res=>{
+        this.$message({
+          type: 'success',
+          message: '设置成功!'
+        });
+        this.fetchData()
+      })
+    },
     handleDelete(idx,r){
       this.$confirm('删除不可逆，如有关联数据，删除将失败。', '提示', {
           confirmButtonText: '我确定要删除',
@@ -161,6 +171,7 @@ export default {
     handleFilter(){
       if(!this.listQuery.id){delete this.listQuery.id}
       if(!this.listQuery.nickname){delete this.listQuery.nickname}
+
       this.listQuery.page = 0
       this.getList()
     },

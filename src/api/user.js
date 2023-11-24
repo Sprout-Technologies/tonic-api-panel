@@ -34,6 +34,13 @@ export function deleteById(id) {
   })
 }
 
+export function kol(id) {
+  return request({
+    url: '/admin/user/kol/'+id,
+    method: 'post',
+  })
+}
+
 export function updateOne(data) {
   return request({
     url: '/admin/user/',

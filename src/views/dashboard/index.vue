@@ -7,6 +7,8 @@
       <!--<el-input style="width:200px" placeholder="URL别名" v-model="listQuery['name']"></el-input>-->
 
       <el-input style="width:200px"  placeholder="用户" v-model="listQuery['user.nickname']"></el-input>
+      <el-input style="width:200px"  placeholder="id" v-model="listQuery['videos.id']"></el-input>
+      <el-input style="width:200px"  placeholder="url" v-model="listQuery['videos.highresUrl']"></el-input>
 
       <!--<el-select clearable style="width: 100px" class="filter-item" v-model="listQuery['category.id']" filterable placeholder="请选择栏目">-->
         <!--<el-option v-for="c in categories.content" :key="c.id" :label="c.name" :value="c.id">-->
@@ -304,10 +306,11 @@
             return arr
         },
       handleFilter(){
-        if(!this.listQuery['category.id']){delete this.listQuery['category.id']}
-        if(!this.listQuery['products.id']){delete this.listQuery['products.id']}
+        if(!this.listQuery['videos.id']){delete this.listQuery['videos.id']}
+        if(!this.listQuery['user.nickname']){delete this.listQuery['user.nickname']}
         if(!this.listQuery['name']){delete this.listQuery['name']}
         if(!this.listQuery['latestPublished.title']){delete this.listQuery['latestPublished.title']}
+        if(!this.listQuery['videos.highresUrl']){delete this.listQuery['videos.highresUrl']}
 
         this.listQuery.page = 0
         this.getList()
