@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie'
 
-const TokenKey = 'Sprout-Admin-Token'
+const TokenKey = 'Sprout-Admin-Token-B'
 
 export function getToken() {
   return Cookies.get(TokenKey)
