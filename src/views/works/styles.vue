@@ -13,7 +13,7 @@
       <el-table-column prop="revision" label="版本号"></el-table-column>
       <el-table-column prop="config" label="Config">
         <template slot-scope="scope">
-          <el-button type="text" @click="showDialog(scope.row)">详情</el-button>
+          <el-button type="text" @click="showDialog(scope.row,true)">详情</el-button>
           <el-button type="text" @click="showDialog(scope.row,false)">以此为模板新增</el-button>
         </template>
       </el-table-column>
@@ -73,7 +73,7 @@
         <el-form-item label="Openpose">
           <el-checkbox v-model="isOpenposeEnabled" @change="handleOpenPoseChange"></el-checkbox>
               <el-form-item label="Control Mode" v-if="currentConfig.openpose">
-                <el-select v-model="currentConfig.openpose.control_mode" >
+                <el-select v-model="currentConfig.openpose.control_mode">
                   <el-option v-for="(label, value) in controlModes" :key="value+label" :label="label" :value="Number(value)"></el-option>
                 </el-select>
               </el-form-item>
@@ -81,7 +81,7 @@
             <el-select v-model="currentConfig.openpose.fallback_extractor" value-key="model">
               <el-option
                 v-for="(extractor, key) in feature_extractor"
-                :key="key+extractor.model"
+                :key="key+extractor"
                 :label="key"
                 :value="extractor"
               >
@@ -122,6 +122,16 @@
         <el-form-item label="STEP">
           <el-input v-model="currentConfig.step"></el-input>
         </el-form-item>
+        <el-form-item label="sampler">
+          <el-select v-model="currentConfig.sampler" placeholder="请选择采样器">
+            <el-option
+              v-for="(value, index) in samplerEnum"
+              :key="index"
+              :label="value || '无'"
+              :value="value"
+            ></el-option>
+          </el-select>
+        </el-form-item>
         <el-button type="primary" @click="saveConfig(currentConfig)">保存</el-button>
       </el-form>
 <!--      <div slot="reference" class="config-preview">详情</div>-->
@@ -152,6 +162,7 @@ export default {
         file: 'https://dkfyqdved0mrm.cloudfront.net/public/style_ref/golden/95da916f6c2548908bab3b2c4a35b5ea.png', // 示例值
         id: 'feae86e7-1a2a-4748-be7b-1a57cd491d9e', // 示例值，新建时可能为空
         name: 'test5', // 示例值
+        sampler: '',
         openpose: {
           control_mode: 0, // 示例值
           fallback_extractor: {
@@ -168,6 +179,7 @@ export default {
         step: 50 // 默认值
       }, // 新增当前配置对象，用于表单绑定
       feature_extractor: {
+        '无': null,
         'lineart_realistic_prompt': { 'control_mode': 1, 'module': 'lineart_realistic', 'model': 'control_v11p_sd15_lineart [43d4be0d]' },
         'lineart_standard_prompt': { 'control_mode': 1, 'module': 'lineart_standard',
           'model': 'control_v11p_sd15_lineart [43d4be0d]' },
@@ -214,7 +226,9 @@ export default {
         0: 'balanced',
         1: 'controlnet',
         2: 'prompt'
-      }
+      },
+      samplerEnum:
+        [null, 'LCM', 'DPM++ 2M Karras', 'DPM++ SDE Karras', 'DPM++ 2M SDE Exponential', 'DPM++ 2M SDE Karras', 'Euler a', 'Euler', 'LMS', 'Heun', 'DPM2', 'DPM2 a', 'DPM++ 2S a', 'DPM++ 2M', 'DPM++ SDE', 'DPM++ 2M SDE', 'DPM++ 2M SDE Heun', 'DPM++ 2M SDE Heun Karras', 'DPM++ 2M SDE Heun Exponential', 'DPM++ 3M SDE', 'DPM++ 3M SDE Karras', 'DPM++ 3M SDE Exponential', 'DPM fast', 'DPM adaptive', 'LMS Karras', 'DPM2 Karras', 'DPM2 a Karras', 'DPM++ 2S a Karras', 'Restart', 'DDIM', 'PLMS', 'UniPC']
     }
   },
   created() {
@@ -222,6 +236,7 @@ export default {
   },
   methods: {
     showDialog(row, isEdit) {
+      this.currentConfig.id = undefined
       this.currentConfig = row.configObject // 设置当前配置对象
       if (row.id && isEdit) {
         this.currentConfig.id = row.id
@@ -264,7 +279,10 @@ export default {
     },
     handleFileUploadSuccess(response, file) {
       // 处理上传成功后的逻辑，这里假设响应中包含了文件的下载路径
-      this.currentConfig.file = response.fileDownloadPath
+      this.currentConfig.file = response.fileDownloadPath.replace(
+        /^https:\/\/sprout-tonic-app.*?\/public\//,
+        'https://dkfyqdved0mrm.cloudfront.net/public/'
+      )
     },
 
     beforeFileUpload(file) {
@@ -295,9 +313,7 @@ export default {
           // 处理解析错误，可能需要提供反馈给用户
         }
       }
-      if (configToSubmit.extractorKey && this.feature_extractor[configToSubmit.extractorKey]) {
-        configToSubmit.extractor = this.feature_extractor[configToSubmit.extractorKey]
-      }
+      configToSubmit.extractor = this.feature_extractor[configToSubmit.extractorKey]
       if (this.isOpenposeEnabled) {
         configToSubmit.openpose = this.currentConfig.openpose
       } else {

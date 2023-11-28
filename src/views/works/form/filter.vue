@@ -68,6 +68,7 @@
           :action="uploadAction"
           :headers="uploadToken"
           :on-success="handleIconSuccess"
+          :data="{ path: 'icon' }"
         >
           <img v-if="form.icon" :src="form.icon" class="avatar">
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
@@ -79,6 +80,7 @@
           :show-file-list="false"
           :action="uploadAction"
           :headers="uploadToken"
+          :data="{ path: 'preview_video' }"
           :on-success="handleVideoSuccess"
         >
           <video v-if="form.previewVideo" :src="form.previewVideo" controls class="video-preview"></video>
@@ -93,6 +95,7 @@
           :show-file-list="false"
           :action="uploadAction"
           :headers="uploadToken"
+          :data="{ path: 'bgm' }"
           :on-success="handleMusicSuccess"
         >
           <video v-if="form.music" :src="form.music" controls class="video-preview"></video>
@@ -137,6 +140,9 @@
       </el-form-item>
       <el-form-item label="性别触发词">
         <el-input v-model="form.gender_prompt"></el-input>
+      </el-form-item>
+      <el-form-item label="neg_prompt">
+        <el-input v-model="form.neg_prompt"></el-input>
       </el-form-item>
       <el-form-item label="TemporalNet" disabled>
         <my-select v-model="form.temporalnet" :options="temporalnet" placeholder="选择TemporalNet"></my-select>
@@ -190,6 +196,11 @@
                 <el-input-number v-model="duration.frame_per_style"></el-input-number>
               </el-form-item>
             </el-col>
+            <el-col :span="4" class="row-spacing" >
+              <el-form-item>
+                <el-button @click="copyDuration(duration)">复制该Duration</el-button>
+              </el-form-item>
+            </el-col>
 <!--            <el-col :span="8" class="row-spacing" v-if="duration.outpaint">
               <el-form-item label="Mask Vid">
                 <el-input v-model="duration.outpaint.mask_vid"></el-input>
@@ -208,13 +219,14 @@
         <el-button type="text" @click="addDuration">添加 Duration</el-button>
       </el-form-item>
       <el-form-item>
+        <el-button type="primary" @click="videoPreview">上传视频并预览</el-button>
         <el-button type="primary" @click="saveData">{{this.id ? '确认滤镜修改':'确认滤镜创建'}}</el-button>
       </el-form-item>
       <el-form-item label="设置预览">
         <json-viewer :value="form" :expand-depth=5 copyable boxed sort></json-viewer>
       </el-form-item>
     </el-form>
-    <el-dialog v-if="showImportModal" title="导入现有滤镜(滤镜名/最后更新时间)" :visible.sync="showImportModal"   @close="handleDialogClose">
+    <el-dialog title="导入现有滤镜(滤镜名/最后更新时间)" :visible.sync="showImportModal"   @close="handleDialogClose" >
       <el-row v-for="(res, index) in exampleData" :key="res" class="filter-item">
         <el-col :span="20" >{{ res.name }}</el-col>
         <el-col :span="20">{{ formatTimestamp(res.updatedAt) || '无更新时间'}}</el-col>
@@ -223,14 +235,53 @@
         </el-col>
       </el-row>
     </el-dialog>
+    <el-dialog   title="预览渲染效果" :visible.sync="previewDialog"   @close="handleDialogClose">
+      <div>注意,此处的预览为了减少渲染时间，只会渲染每一个区间的第一帧,快速预览效果。完整渲染需要的时间会比较久。并且由于渲染结果随机，仅供预览使用，不代表最终效果。</div>
+      <el-form>
+        <el-form-item label="上传视频:">
+          <div style="display: flex">
+            <el-upload
+              class="avatar-uploader"
+              :show-file-list="false"
+              :action="uploadAction"
+              :headers="uploadToken"
+              :on-success="handleResultVideoSuccess">
+              <video v-if="resultVideo" :src="resultVideo" controls class="result-video-preview" id="result-video"></video>
+              <i v-else class="el-icon-plus avatar-uploader-icon">
+                上传视频
+              </i>
+            </el-upload>
+          </div>
+        </el-form-item>
+        <el-form-item label="预览:">
+          <el-button @click="confirmPreview">STEP1:确认视频并抽帧预览(1秒30帧，请勿配置错误.仅抽开始第一帧)</el-button>
+          <el-button v-if="!isStartPrint" @click="startPrint">STEP2:开始渲染(请勿重复点击，点击后Fail的图片占位会变成渲染后图片，需要3-5分钟完全渲染)</el-button>
+          <el-button disabled v-else>渲染中</el-button>
+          <div class="preview-area">
+            <div class="single-preview" v-for="(duration,index) in this.form.durations" v-if="videoImage.length>0">
+              <div class="single-preview-title">
+                第 {{duration.startSeconds}} 秒 第 {{duration.startFrames}} 帧
+              </div>
+              <div class="single-preview-result">
+                <div class="single-preview">
+                <el-image :preview-src-list="videoImage[index]" :src="videoImage[index]" class="result-image-preview"/>
+                <!-- 箭头图标 -->
+                <i class="el-icon-arrow-right arrow-icon"></i>
+                  <el-image :preview-src-list="videoImagePreview[index]" :src="videoImagePreview[index]" class="result-image-preview"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 
 
 <script>
-import { getById, getFilterStyle, updateFilter, queryList } from '@/api/filter'
+import { getById, getFilterStyle, queryList, updateFilter } from '@/api/filter'
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
-import axios from 'axios'
 import MySelect from './MySelect.vue'
 
 export default {
@@ -256,6 +307,12 @@ export default {
       loading: false,
       progressPercentage: 0,
       music: '',
+      resultVideo: '',
+      previewDialog: false,
+      videoImage: [],
+      videoURLImage: [],
+      videoImagePreview: [],
+      isStartPrint: false,
       form: {
         artistName: '',
         songName: '',
@@ -285,6 +342,7 @@ export default {
         base_model: null,
         trigger_prompt: '',
         gender_prompt: '',
+        neg_prompt: '',
         temporalnet: null,
         durations: [],
         exDuration: 0
@@ -389,6 +447,79 @@ export default {
     }
   },
   methods: {
+    videoPreview() {
+      this.previewDialog = true
+    },
+
+    // 处理上传成功
+    async  uploadBlob(blob, style) {
+      const file = new File([blob], 'image.png', { type: blob.type })
+      const formData = new FormData()
+
+      formData.append('file', file)
+      formData.append('path', 'style_ref')
+      const uploadURL = getUploadFileURL()
+      const response = await fetch(uploadURL, {
+        method: 'POST',
+        body: formData,
+        headers: getUploadToken()
+      })
+      const { fileDownloadPath, fileName } = await response.json()
+      const styleName = JSON.parse(style).name
+      this.videoURLImage.push(
+        {
+          fileName: fileName,
+          file: fileDownloadPath,
+          style: style,
+          styleName: styleName
+        })
+    },
+    async copyDuration(duration) {
+      this.form.durations.push(JSON.parse(JSON.stringify(duration)))
+    },
+    async confirmPreview() {
+      this.videoImage = []
+      const video = document.createElement('video')
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      video.setAttribute('crossOrigin', 'anonymous')
+      video.src = this.resultVideo
+
+      video.onloadedmetadata = async() => {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+
+        try {
+          for (const duration of this.form.durations) {
+            const timeInSeconds = Number(duration.startSeconds) + (Number(duration.startFrames) / 30)
+            video.currentTime = timeInSeconds
+
+            await new Promise(resolve => {
+              video.onseeked = () => {
+                resolve() // 确保视频跳转到指定时间点
+              }
+            })
+
+            ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
+            await new Promise(resolve => {
+              canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob)
+                this.videoImage.push(url)
+                this.uploadBlob(blob, duration.style)
+                resolve()
+              })
+            })
+          }
+        } catch (error) {
+          console.error('Error during video processing:', error)
+        } finally {
+          video.remove()
+          canvas.remove()
+        }
+      }
+
+      video.load() // 确保视频加载
+    },
     formatTimestamp(timestamp) {
       const date = new Date(timestamp)
       return date.toLocaleString('zh-CN', { hour12: false })
@@ -402,22 +533,65 @@ export default {
     handleIconSuccess(res, file) {
       if (res.fileDownloadPath) {
         this.form.icon = res.fileDownloadPath.replace(
-          'https://sprout-tonic-app210644-dev.s3-accelerate.amazonaws.com/public/',
+          /^https:\/\/sprout-tonic-app.*?\/public\//,
           'https://dkfyqdved0mrm.cloudfront.net/public/'
         )
       }
       this.$forceUpdate()
     },
+    async startPrint() {
+      if (this.videoURLImage.length === 0) {
+        this.$message.error('请先上传视频并切分帧')
+        return
+      }
+
+      // 定义请求 URL
+      const previewURL = 'https://u201483-b96f-7fef9ade.westx.seetacloud.com:8443/img/preview'
+      this.isStartPrint = true
+      for (const item of this.videoURLImage) {
+        try {
+          // 发送 POST 请求
+          const response = await fetch(previewURL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              files: [`style_ref/${item.fileName}`], // file 是一个只包含一个元素的数组
+              style: JSON.parse(item.style)
+            })
+          })
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+          }
+
+          const responseData = await response.json()
+          this.videoImagePreview.push(responseData[0])
+          if (this.videoImagePreview.length === this.videoURLImage.length) {
+            this.isStartPrint = false
+          }
+          // 在这里处理每个请求的响应
+        } catch (error) {
+          console.error('请求失败:', error)
+          // 在这里处理请求错误
+        }
+      }
+    },
     handleVideoSuccess(res, file) {
       this.form.previewVideo = res.fileDownloadPath.replace(
-        'https://sprout-tonic-app210644-dev.s3-accelerate.amazonaws.com/public/',
+        /^https:\/\/sprout-tonic-app.*?\/public\//,
         'https://dkfyqdved0mrm.cloudfront.net/public/'
       )
       this.$forceUpdate()
     },
+    handleResultVideoSuccess(res, file) {
+      this.resultVideo = res.fileDownloadPath
+      this.$forceUpdate()
+    },
     handleMusicSuccess(res, file) {
       this.form.music = res.fileDownloadPath.replace(
-        'https://sprout-tonic-app210644-dev.s3-accelerate.amazonaws.com/public/',
+        /^https:\/\/sprout-tonic-app.*?\/public\//,
         'https://dkfyqdved0mrm.cloudfront.net/public/'
       )
       this.$forceUpdate()
@@ -529,6 +703,7 @@ export default {
     },
     handleDialogClose() {
       this.showImportModal = false
+      this.previewDialog = false
     },
     handleImportTemplate() {
       this.showImportModal = !this.showImportModal
@@ -634,6 +809,24 @@ export default {
 }
 .filter-item{
   margin:10px;
+  display: flex;
+  align-items: center;
+}
+.result-video-preview{
+  width: 400px;
+  height: 400px;
+}
+.result-image-preview{
+  width: 120px;
+  height: 180px;
+}
+.preview-area{
+  display: flex;
+  margin: 20px;
+  flex-wrap: wrap;
+}
+.single-preview{
+  margin: 20px;
   display: flex;
   align-items: center;
 }
