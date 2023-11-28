@@ -72,15 +72,15 @@ export const constantRouterMap = [
   {
     path: '/styles',
     component: Layout,
-    name: 'Styler',
-    meta: { title: 'Styler', icon: 'file' },
+    name: 'Styles',
+    meta: { title: 'Styles', icon: 'file' },
     children: [
       {
-        path: 'filterEdit',
-        name: 'Styler编辑',
+        path: 'stylesEdit',
+        name: 'Styles编辑',
         component: () => import('@/views/works/styles'),
-        meta: { title: 'Styler', icon: 'guide' }
-      },
+        meta: { title: 'Styles', icon: 'guide' }
+      }
     ]
   },
   {
@@ -96,12 +96,12 @@ export const constantRouterMap = [
         component: () => import('@/views/works/filter'),
         meta: { title: '滤镜', icon: 'guide' }
       },
-  //     {
-  //       path: 'vision',
-  //       name: '视觉',
-  //       component: () => import('@/views/works/vision'),
-  //       meta: { title: '视觉', icon: 'guide' }
-  //     },
+      //     {
+      //       path: 'vision',
+      //       name: '视觉',
+      //       component: () => import('@/views/works/vision'),
+      //       meta: { title: '视觉', icon: 'guide' }
+      //     },
       {
         path: 'filterEdit/:id',
         name: '滤镜表单',
@@ -109,16 +109,16 @@ export const constantRouterMap = [
 
         component: () => import('@/views/works/form/filter'),
         meta: { title: '滤镜表单' }
-      },
+      }
 
-  //     {
-  //       path: 'vision/:id',
-  //       name: '视觉表单',
-  //       hidden: true,
-  //
-  //       component: () => import('@/views/works/form/vision'),
-  //       meta: { title: '视觉表单' }
-  //     },
+      //     {
+      //       path: 'vision/:id',
+      //       name: '视觉表单',
+      //       hidden: true,
+      //
+      //       component: () => import('@/views/works/form/vision'),
+      //       meta: { title: '视觉表单' }
+      //     },
     ]
   },
   // {
@@ -194,7 +194,7 @@ export const constantRouterMap = [
 
         component: () => import('@/views/form/topic'),
         meta: { title: '文章表单' }
-      },
+      }
     ]
   },
   //
@@ -280,7 +280,7 @@ export const constantRouterMap = [
 
         component: () => import('@/views/form/config'),
         meta: { title: '参数配置' }
-      },
+      }
       // {
       //   path: 'backs',
       //   name: '背景设置',
@@ -290,7 +290,6 @@ export const constantRouterMap = [
       // }
     ]
   },
-
 
   { path: '*', redirect: '/404', hidden: true }
 ]
