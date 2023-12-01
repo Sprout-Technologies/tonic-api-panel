@@ -259,6 +259,25 @@ export const constantRouterMap = [
   //   ]
   // },
   {
+    path: '/user',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: '管理用户',
+        component: () => import('@/views/table/user'),
+        meta: { title: '管理用户', icon: 'user' }
+      },
+      {
+        path: ':id',
+        name: '管理用户表单',
+        hidden: true,
+        component: () => import('@/views/form/user'),
+        meta: { title: '管理用户表单' }
+      }
+    ]
+  },
+  {
     path: '/basic',
     component: Layout,
     name: '其它',
@@ -272,20 +291,6 @@ export const constantRouterMap = [
 
         component: () => import('@/views/table/category'),
         meta: { title: '栏目' }
-      },
-      {
-        path: 'user',
-        name: '管理用户',
-        component: () => import('@/views/table/user'),
-        meta: { title: '管理用户' }
-      },
-      {
-        path: 'user/:id',
-        name: '管理用户表单',
-        hidden: true,
-
-        component: () => import('@/views/form/user'),
-        meta: { title: '管理用户表单' }
       },
       {
         path: 'category/:id',
