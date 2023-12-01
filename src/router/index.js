@@ -197,6 +197,43 @@ export const constantRouterMap = [
       }
     ]
   },
+
+  {
+    path: '/mailtools',
+    component: Layout,
+    redirect: '/mailtools',
+    name: 'mailtools',
+    meta: { title: 'Mailtools', icon: 'mail' },
+    children: [
+      {
+        path: 'mailtools',
+        name: '邮件工具',
+        component: () => import('@/views/mailtool/index'),
+        meta: { title: '邮件工具', icon: 'email' }
+      }
+    ]
+  },
+  {
+    path: '/pushtools',
+    component: Layout,
+    redirect: '/pushtools',
+    name: '推送工具',
+    meta: { title: '推送工具', icon: 'mail' },
+    children: [
+      {
+        path: 'pushtools',
+        name: '推送列表',
+        component: () => import('@/views/pushTool/index'),
+        meta: { title: '推送列表', icon: 'email' }
+      },
+      {
+        path: 'pushDetail',
+        name: '推送详情',
+        component: () => import('@/views/pushTool/pushDetail'),
+        meta: { title: '创建推送', icon: 'email' }
+      }
+    ]
+  },
   //
   // {
   //   path: '/team',
