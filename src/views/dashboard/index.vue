@@ -110,7 +110,7 @@
         <el-table-column align="center" label='拷贝视频'>
           <template slot-scope="scope">
             <el-button type="primary" size="mini" @click="copyIdToClipboard(scope.row.videos[0].id)">id</el-button>
-            <el-button type="primary" size="mini" @click="copyIdToClipboard(scope.row.videos[0].originalVideo)">原</el-button>
+            <el-button type="primary" size="mini" @click="copyIdToClipboard('https://dkfyqdved0mrm.cloudfront.net/public/'+scope.row.videos[0].originalVideo)">原</el-button>
             <el-button type="primary" size="mini" @click="copyVidUrlToClipboard(scope.row.videos[0])">高分</el-button>
           </template>
         </el-table-column>
