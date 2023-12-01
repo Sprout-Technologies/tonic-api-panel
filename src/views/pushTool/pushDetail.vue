@@ -18,9 +18,6 @@
         <el-form-item label="内容" required>
           <el-input type="textarea" v-model="form.body" placeholder="请输入内容"></el-input>
         </el-form-item>
-        <el-form-item label="推送时间 (createdAt)">
-          <el-date-picker v-model="form.createdAt" type="datetime" placeholder="选择日期时间"></el-date-picker>
-        </el-form-item>
         <el-form-item label="推送链接 (afPushLink)">
           <el-input v-model="form.afPushLink" placeholder="请输入推送链接"></el-input>
         </el-form-item>

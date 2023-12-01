@@ -6,7 +6,7 @@
         <el-table-column prop="name" label="名称" width="180"></el-table-column>
         <el-table-column prop="subTitle" label="副标题" width="180"></el-table-column>
         <el-table-column prop="body" label="内容"></el-table-column>
-        <el-table-column prop="createdAt" label="推送时间" width="200">
+        <el-table-column prop="createdAt" label="创建时间" width="200">
           <template slot-scope="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
