@@ -4,6 +4,7 @@
     <el-footer style="margin-top:30px">
 <!--      <el-button type="primary" @click="featureSubmit">{{this.form.weight && this.form.weight>0.0 ? '取消精选':'精选'}}</el-button>-->
       <el-button type="primary" @click="demoSubmit">设置为{{this.form.videos[0].filter.name}}的演示视频</el-button>
+      <el-button type="primary" @click="reRender">重新渲染</el-button>
 
       <el-button @click="onCancel">返回</el-button>
     </el-footer>
@@ -12,7 +13,7 @@
 </template>
 
 <script>
-import { updateOne, getByIdAdmin, feature, demo } from '@/api/post'
+import { updateOne, getByIdAdmin, feature, demo, reRender } from '@/api/post'
 // import {getList as getCategoryList} from "@/api/category"
 import { getUploadFileURL, getUploadToken } from '@/api/upload'
 const moment = require('moment')
@@ -70,6 +71,16 @@ export default {
     },
     demoSubmit() {
       demo(this.form.id).then(() => {
+          this.$message({
+            message: '提交成功!',
+            type: 'success'
+          })
+          this.onCancel()
+        }
+      )
+    },
+    reRender() {
+      reRender(this.form.id).then(() => {
           this.$message({
             message: '提交成功!',
             type: 'success'

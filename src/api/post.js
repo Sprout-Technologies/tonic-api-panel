@@ -67,6 +67,13 @@ export function demo(id) {
   })
 }
 
+export function reRender(id) {
+  return request({
+    url: '/admin/post/retry/'+id,
+    method: 'get',
+  })
+}
+
 export function publish(id) {
   return request({
     url: '/admin/post/publish/'+id,
