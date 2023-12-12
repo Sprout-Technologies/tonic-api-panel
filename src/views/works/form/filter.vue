@@ -147,6 +147,12 @@
       <el-form-item label="TemporalNet" disabled>
         <my-select v-model="form.temporalnet" :options="temporalnet" placeholder="选择TemporalNet"></my-select>
       </el-form-item>
+      <el-form-item label="Use Animatediff" disabled>
+        <el-checkbox v-model="animatediff" @change="handleAnimatediffChange"></el-checkbox>
+        <el-select v-model="selectedModel" placeholder="请选择模型" v-if="animatediff">
+          <el-option v-for="model in models" :key="model" :label="model" :value="model"></el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item label="Durations">
         <div v-for="(duration, index) in form.durations" :key="index">
           <el-row>
@@ -443,6 +449,18 @@ export default {
         { value: 0, label: '隐藏' },
         { value: 1, label: '上线' },
         { value: 2, label: '测试' }
+      ],
+      animatediff: null,
+      selectedModel: '',
+      models: [
+        'animatediffMotion_v14.ckpt',
+        'animatediffMotion_sdxlV10Beta.ckpt',
+        'mm_sd_v15_v2.ckpt',
+        'mm_sdxl_v10_beta.ckpt',
+        'temporaldiff-v1-animatediff.safetensors',
+        'hsxl_temporal_layers.f16.safetensors',
+        'mm-Stabilized_mid.pth',
+        'mm-Stabilized_high.pth'
       ]
     }
   },
@@ -624,11 +642,26 @@ export default {
     removeDuration(index) {
       this.form.durations.splice(index, 1)
     },
+    handleAnimatediffChange(value) {
+      if (value) {
+        // 如果没有默认模型，则选择第一个
+        this.selectedModel = this.models.length > 0 ? this.models[0] : ''
+        this.form.animatediff = { model: this.selectedModel }
+      } else {
+        this.selectedModel = ''
+        this.form.animatediff = null
+      }
+    },
     saveData() {
       // 从 this.form 创建 submitData 的副本
       const submitData = JSON.parse(JSON.stringify(this.form))
       delete submitData.params
       // 将字符串转换回对象
+      if (this.animatediff) {
+        submitData.animatediff = {
+          model: this.selectedModel
+        }
+      }
       // 处理 styler
       if (submitData.stylerKey && this.stylers[submitData.stylerKey]) {
         submitData.styler = this.stylers[submitData.stylerKey]
@@ -723,6 +756,9 @@ export default {
       }
       // 使用 JSON 方法进行深拷贝
       const deepCopiedFilter = JSON.parse(JSON.stringify(filter))
+      // 初始化selectedModel和animatediff
+      this.selectedModel = '';
+      this.animatediff = false;
 
       // 处理 deepCopiedFilter 的属性
       deepCopiedFilter.durations.forEach(duration => {
@@ -738,6 +774,12 @@ export default {
           duration.style = JSON.stringify(...duration.style)
         }
       })
+      if (deepCopiedFilter.animatediff && deepCopiedFilter.animatediff.model) {
+        // 如果存在animatediff属性
+        this.selectedModel = deepCopiedFilter.animatediff.model;
+        this.animatediff = true; // 设置为true表示checkbox应被勾选
+      }
+
       // 更新 form 数据
       this.form = {
         // 新增或修改的属性
@@ -758,6 +800,7 @@ export default {
         previewVideo: res.previewVideo,
         name: res.name,
         visibilityStatus: res.visibilityStatus,
+        animatediff: this.animatediff ? { model: this.selectedModel } : null,
         // 已有的属性
         ...deepCopiedFilter
       }
