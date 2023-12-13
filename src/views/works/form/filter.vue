@@ -757,8 +757,8 @@ export default {
       // 使用 JSON 方法进行深拷贝
       const deepCopiedFilter = JSON.parse(JSON.stringify(filter))
       // 初始化selectedModel和animatediff
-      this.selectedModel = '';
-      this.animatediff = false;
+      this.selectedModel = ''
+      this.animatediff = false
 
       // 处理 deepCopiedFilter 的属性
       deepCopiedFilter.durations.forEach(duration => {
@@ -776,8 +776,8 @@ export default {
       })
       if (deepCopiedFilter.animatediff && deepCopiedFilter.animatediff.model) {
         // 如果存在animatediff属性
-        this.selectedModel = deepCopiedFilter.animatediff.model;
-        this.animatediff = true; // 设置为true表示checkbox应被勾选
+        this.selectedModel = deepCopiedFilter.animatediff.model
+        this.animatediff = true // 设置为true表示checkbox应被勾选
       }
 
       // 更新 form 数据
