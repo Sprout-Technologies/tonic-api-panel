@@ -55,6 +55,13 @@
           prop="name"
           label="名称">
         </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.visibilityStatus === 0" type="info">隐藏</el-tag>
+            <el-tag v-else-if="scope.row.visibilityStatus === 1" type="success">上线</el-tag>
+            <el-tag v-else-if="scope.row.visibilityStatus === 2" type="warning">测试</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="id"
           label="id">
