@@ -437,6 +437,7 @@ export default {
       },
       stylers: {
         '无': {},
+        'ipadapter_0.1': { 'module': 'ip-adapter_clip_sd15', 'model': 'ip-adapter_sd15 [6a3f6166]', 'weight': 0.1 },
         't2ia_style_clipvision': { 'module': 't2ia_style_clipvision', 'model': 't2iadapter_style_sd14v1 [202e85cc]' },
         'shuffle': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 1.0, 'start': 0.0, 'end': 1 },
         'shuffle_weight15': { 'module': 'shuffle', 'model': 'control_v11e_sd15_shuffle [526bfdae]', 'weight': 0.15, 'start': 0.0,
@@ -453,6 +454,7 @@ export default {
       animatediff: null,
       selectedModel: '',
       models: [
+        'mm_sd_v14.ckpt',
         'animatediffMotion_v14.ckpt',
         'animatediffMotion_sdxlV10Beta.ckpt',
         'mm_sd_v15_v2.ckpt',
@@ -774,10 +776,16 @@ export default {
           duration.style = JSON.stringify(...duration.style)
         }
       })
-      if (deepCopiedFilter.animatediff && deepCopiedFilter.animatediff.model) {
-        // 如果存在animatediff属性
-        this.selectedModel = deepCopiedFilter.animatediff.model
-        this.animatediff = true // 设置为true表示checkbox应被勾选
+      if (deepCopiedFilter.animatediff) {
+        // 如果存在animatediff属性，则设置selectedModel和animatediff.如果animatediff.model为{},则选择默认model(modelList第0项.如果animatediff.model为null，则不勾选checkbox
+        if (deepCopiedFilter.animatediff.model) {
+          this.animatediff = true
+          if (deepCopiedFilter.animatediff.model === '{}') {
+            this.selectedModel = this.models.length > 0 ? this.models[0] : ''
+          } else {
+            this.selectedModel = deepCopiedFilter.animatediff.model
+          }
+        }
       }
 
       // 更新 form 数据

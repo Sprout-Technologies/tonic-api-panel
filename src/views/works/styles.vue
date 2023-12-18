@@ -72,6 +72,9 @@
         </el-form-item>
         <el-form-item label="Openpose">
           <el-checkbox v-model="isOpenposeEnabled" @change="handleOpenPoseChange"></el-checkbox>
+          <el-form-item label="Weight" v-if="currentConfig.openpose">
+            <el-input v-model="currentConfig.openpose.weight" style="width: 100px"/>
+          </el-form-item>
               <el-form-item label="Control Mode" v-if="currentConfig.openpose">
                 <el-select v-model="currentConfig.openpose.control_mode">
                   <el-option v-for="(label, value) in controlModes" :key="value+label" :label="label" :value="Number(value)"></el-option>
@@ -165,6 +168,7 @@ export default {
         sampler: '',
         openpose: {
           control_mode: 0, // 示例值
+          weight: 1,
           fallback_extractor: {
             model: 'control_v11p_sd15_softedge [a8575a2a]',
             module: 'softedge_hed'
@@ -267,6 +271,7 @@ export default {
         // 使用 Vue.set 更新对象以确保响应式更新
         this.$set(this.currentConfig, 'openpose', {
           control_mode: 0,
+          weight: 1,
           fallback_extractor: {
             model: 'control_v11p_sd15_softedge [a8575a2a]',
             module: 'softedge_hed'
