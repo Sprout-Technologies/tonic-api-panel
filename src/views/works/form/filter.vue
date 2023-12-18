@@ -776,15 +776,20 @@ export default {
           duration.style = JSON.stringify(...duration.style)
         }
       })
+      // 函数来检查对象是否为空
+      function isEmptyObject(obj) {
+        return Object.keys(obj).length === 0 && obj.constructor === Object
+      }
+
+      // 你现有的代码逻辑
       if (deepCopiedFilter.animatediff) {
-        // 如果存在animatediff属性，则设置selectedModel和animatediff.如果animatediff.model为{},则选择默认model(modelList第0项.如果animatediff.model为null，则不勾选checkbox
-        if (deepCopiedFilter.animatediff.model) {
-          this.animatediff = true
-          if (deepCopiedFilter.animatediff.model === '{}') {
-            this.selectedModel = this.models.length > 0 ? this.models[0] : ''
-          } else {
-            this.selectedModel = deepCopiedFilter.animatediff.model
-          }
+        this.animatediff = true
+
+        // 检查deepCopiedFilter.animatediff.model是否为空对象
+        if (isEmptyObject(deepCopiedFilter.animatediff)) {
+          this.selectedModel = this.models[0]
+        } else {
+          this.selectedModel = deepCopiedFilter.animatediff.model
         }
       }
 
