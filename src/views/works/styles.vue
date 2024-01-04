@@ -97,14 +97,40 @@
             <el-option v-for="(item, key) in feature_extractor" :label="key" :value="key" :key="key"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="Styler">
-          <el-select v-model="currentConfig.styler">
+        <el-form-item class="styler-group-title">
+          <h3>Styler 设置</h3>
+        </el-form-item>
+
+        <el-form-item class="styler-group-item" label="Weight">
+          <el-input-number v-model="currentConfig.styler.weight" :min="0" step="0.1" />
+        </el-form-item>
+
+        <el-form-item class="styler-group-item" label="Control Mode">
+          <el-select v-model="currentConfig.styler.control_mode">
             <el-option
-              v-for="(style, styleKey) in stylers"
-              :key="styleKey"
-              :label="styleKey"
-              :value="JSON.stringify(style)"
-            ></el-option>
+              v-for="(label, value) in controlModes"
+              :key="value"
+              :label="label"
+              :value="Number(value)">
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item class="styler-group-item" label="Module">
+          <el-select v-model="currentConfig.styler.module">
+            <el-option label="None" :value="null"></el-option>
+            <el-option label="ip-adapter_clip_sd15" :value="'ip-adapter_clip_sd15'"></el-option>
+            <el-option label="ip-adapter_clip_sdxl" :value="'ip-adapter_clip_sdxl'"></el-option>
+            <el-option label="t2ia_style_clipvision" :value="'t2ia_style_clipvision'"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item class="styler-group-item" label="Model">
+          <el-select v-model="currentConfig.styler.model">
+            <el-option label="ip-adapter_sd15 [6a3f6166]" :value="'ip-adapter_sd15 [6a3f6166]'"></el-option>
+            <el-option label="ip-adapter_sd15_plus [32cd8f7f]" :value="'ip-adapter_sd15_plus [32cd8f7f]'"></el-option>
+            <el-option label="ip-adapter_xl [4209e9f7]" :value="'ip-adapter_xl [4209e9f7]'"></el-option>
+            <el-option label="t2iadapter_style_sd14v1 [202e85cc]" :value="'t2iadapter_style_sd14v1 [202e85cc]'"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="Tag Prompt">
@@ -136,6 +162,7 @@
           </el-select>
         </el-form-item>
         <el-button type="primary" @click="saveConfig(currentConfig)">保存</el-button>
+        <el-button type="primary" @click="copyConfig">复制配置</el-button>
       </el-form>
 <!--      <div slot="reference" class="config-preview">详情</div>-->
     </el-dialog>
@@ -175,8 +202,10 @@ export default {
           }
         },
         styler: {
-          model: 't2iadapter_style_sd14v1 [202e85cc]',
-          module: 't2ia_style_clipvision'
+          weight: 1,
+          control_mode: 0,
+          module: null,
+          model: null
         },
         denoising_strength: 0.5, // 默认值
         cfg: 50, // 默认值
@@ -260,6 +289,9 @@ export default {
       this.fetchStylesEnum().then(() => {
         this.stylesEnum.forEach(item => {
           item.configObject = JSON.parse(item.config)
+          if (typeof item.configObject.styler === 'string') {
+            item.configObject.styler = JSON.parse(item.configObject.styler)
+          }
           if (item.configObject.openpose) {
             item.isOpenposeEnabled = true
           }
@@ -282,6 +314,15 @@ export default {
         this.$delete(this.currentConfig, 'openpose')
       }
     },
+    copyConfig() {
+      const el = document.createElement('textarea')
+      el.value = JSON.stringify(this.currentConfig, null, 2)
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      this.$message.success('配置已复制到剪贴板')
+    },
     handleFileUploadSuccess(response, file) {
       // 处理上传成功后的逻辑，这里假设响应中包含了文件的下载路径
       this.currentConfig.file = response.fileDownloadPath.replace(
@@ -300,9 +341,16 @@ export default {
       this.currentConfig.file = null
     },
     saveConfig() {
-      console.log(this.currentConfig)
       // 创建一个新的配置对象，深度克隆当前配置
-      const configToSubmit = JSON.parse(JSON.stringify(this.currentConfig));
+      const configToSubmit = JSON.parse(JSON.stringify(this.currentConfig))
+      if (typeof configToSubmit.styler === 'string') {
+        try {
+          // 尝试将 styler 解析为对象
+          configToSubmit.styler = JSON.parse(configToSubmit.styler)
+        } catch (e) {
+          console.error('Error parsing styler: ', e)
+        }
+      }
 
       // 遍历需要处理的字段
       ['denoising_strength', 'cfg', 'step'].forEach(key => {
@@ -326,6 +374,7 @@ export default {
       }
       // 将整个 configToSubmit 转换为字符串以便保存
       const configString = JSON.stringify(configToSubmit)
+      console.log(configString, '123')
       updateFilterStyle({
         id: configToSubmit.id,
         name: configToSubmit.name,
@@ -376,5 +425,16 @@ export default {
 .image-preview{
   width: 200px;
   height: 200px;
+}
+.styler-group-title h3 {
+  margin-top: 20px;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.styler-group-item {
+  border-left: 4px solid #409eff; /* Element UI 主题色 */
+  padding-left: 10px;
+  margin-bottom: 10px;
 }
 </style>

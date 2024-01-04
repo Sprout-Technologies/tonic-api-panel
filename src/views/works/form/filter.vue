@@ -682,6 +682,7 @@ export default {
           duration.end = Number(duration.endSeconds) + (Number(duration.endFrames) / 30)
         })
       }
+
       if (this.form.exDuration) {
         submitData.duration = this.form.exDuration
       }
